@@ -12,10 +12,12 @@ export interface Meal {
 }
 
 export interface ShoppingList {
-  shoppingListId: string;
-  name: string;
-  meals: string[]; // Array of mealIds
-  ingredients: string[]; // Array of ingredientIds
+  shoppingListId?: string;  // For backward compatibility
+  listId: string;           // Actual API field
+  name?: string;            // Optional for backward compatibility
+  meals?: string[];         // Optional for backward compatibility
+  mealIds: string[];        // Actual API field
+  ingredients?: string[];   // Optional for backward compatibility
   createdAt?: string;
 }
 

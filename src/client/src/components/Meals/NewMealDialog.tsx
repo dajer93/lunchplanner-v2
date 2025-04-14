@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import {
   Alert,
   Box,
@@ -41,7 +41,12 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
     setError(null);
   };
 
-  const handleAddIngredient = async () => {
+  const handleAddIngredient = async (e?: FormEvent) => {
+    // Prevent form submission if this is called from a form event
+    if (e) {
+      e.preventDefault();
+    }
+    
     if (!currentIngredient.trim()) {
       return;
     }
@@ -51,6 +56,13 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
     
     try {
       const newIngredient = await addIngredient(currentIngredient.trim());
+      console.log('New ingredient received:', newIngredient);
+      
+      // Validate the ingredient before adding it to the state
+      if (!newIngredient || typeof newIngredient !== 'object' || !newIngredient.ingredientId) {
+        throw new Error('Invalid ingredient data received from server');
+      }
+      
       setIngredients([...ingredients, newIngredient]);
       setCurrentIngredient('');
     } catch (err) {
@@ -65,7 +77,12 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
     setIngredients(ingredients.filter(ingredient => ingredient.ingredientId !== ingredientId));
   };
 
-  const handleSaveMeal = async () => {
+  const handleSaveMeal = async (e?: FormEvent) => {
+    // Prevent form submission if this is called from a form event
+    if (e) {
+      e.preventDefault();
+    }
+    
     if (!mealName.trim()) {
       setError('Please enter a meal name');
       return;
@@ -98,13 +115,6 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
     onClose(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && currentIngredient.trim()) {
-      e.preventDefault();
-      handleAddIngredient();
-    }
-  };
-
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>Add New Meal</DialogTitle>
@@ -131,46 +141,54 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
           Ingredients
         </Typography>
         
-        <Box sx={{ display: 'flex', mb: 2 }}>
-          <TextField
-            label="Add Ingredient"
-            fullWidth
-            value={currentIngredient}
-            onChange={(e) => setCurrentIngredient(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={loading || addingIngredient}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleAddIngredient}
-            disabled={!currentIngredient.trim() || loading || addingIngredient}
-            sx={{ ml: 1 }}
-          >
-            {addingIngredient ? <CircularProgress size={24} /> : 'Add'}
-          </Button>
-        </Box>
+        <form onSubmit={handleAddIngredient}>
+          <Box sx={{ display: 'flex', mb: 2 }}>
+            <TextField
+              label="Add Ingredient"
+              fullWidth
+              value={currentIngredient}
+              onChange={(e) => setCurrentIngredient(e.target.value)}
+              disabled={loading || addingIngredient}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              disabled={!currentIngredient.trim() || loading || addingIngredient}
+              sx={{ ml: 1 }}
+            >
+              {addingIngredient ? <CircularProgress size={24} /> : 'Add'}
+            </Button>
+          </Box>
+        </form>
         
         {ingredients.length > 0 ? (
           <List>
-            {ingredients.map((ingredient) => (
-              <ListItem
-                key={ingredient.ingredientId}
-                secondaryAction={
-                  <IconButton 
-                    edge="end" 
-                    aria-label="delete" 
-                    onClick={() => handleRemoveIngredient(ingredient.ingredientId)}
-                    disabled={loading}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                }
-              >
-                <ListItemText primary={ingredient.ingredientName} />
-              </ListItem>
-            ))}
+            {ingredients.map((ingredient) => {
+              // Safety check to prevent rendering errors
+              if (!ingredient || typeof ingredient !== 'object') {
+                return null;
+              }
+              
+              return (
+                <ListItem
+                  key={ingredient.ingredientId || 'unknown'}
+                  secondaryAction={
+                    <IconButton 
+                      edge="end" 
+                      aria-label="delete" 
+                      onClick={() => handleRemoveIngredient(ingredient.ingredientId)}
+                      disabled={loading}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemText primary={ingredient.ingredientName || 'Unnamed Ingredient'} />
+                </ListItem>
+              );
+            })}
           </List>
         ) : (
           <Typography variant="body2" color="text.secondary" align="center" sx={{ my: 2 }}>
@@ -188,13 +206,15 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
         <Button onClick={handleClose} disabled={loading}>
           Cancel
         </Button>
-        <Button
-          onClick={handleSaveMeal}
-          variant="contained"
-          disabled={loading || ingredients.length === 0 || !mealName.trim()}
-        >
-          {loading ? <CircularProgress size={24} /> : 'Save Meal'}
-        </Button>
+        <form onSubmit={handleSaveMeal} style={{ display: 'inline' }}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading || ingredients.length === 0 || !mealName.trim()}
+          >
+            {loading ? <CircularProgress size={24} /> : 'Save Meal'}
+          </Button>
+        </form>
       </DialogActions>
     </Dialog>
   );
