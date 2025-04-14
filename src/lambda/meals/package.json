@@ -1,0 +1,17 @@
+{
+  "name": "lunchplanner-v2-meals-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function for handling meals in the LunchPlanner V2 application",
+  "main": "addMeal.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.470.0",
+    "@aws-sdk/util-dynamodb": "^3.470.0",
+    "uuid": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "zip": "zip -r function.zip ."
+  }
+} 
