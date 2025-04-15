@@ -122,7 +122,7 @@ Resources:
         ApiEventOptions:
           Type: Api
           Properties:
-            Path: /meals
+            Path: /ingredients
             Method: options
             RestApiId: !Ref LunchplannerApi
       Policies:
@@ -163,7 +163,7 @@ Resources:
         ApiEventOptions:
           Type: Api
           Properties:
-            Path: /meals
+            Path: /shoppingLists
             Method: options
             RestApiId: !Ref LunchplannerApi
       Policies:
