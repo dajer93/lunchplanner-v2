@@ -36,17 +36,7 @@ jobs:
           aws-region: eu-central-1
           
       - name: SAM Package
-        run: |
-          aws cloudformation package \ 
-          --s3-bucket lunchplannerv2-lambdas \
-          --template-file template.yaml \
-          --output-template-file gen/template-generated.yaml
+        run: aws cloudformation package --s3-bucket lunchplannerv2-lambdas --template-file template.yaml --output-template-file gen/template-generated.yaml
           
       - name: SAM deploy
-        run: |
-          aws cloudformation deploy \
-          --template-file gen/template-generated.yaml \
-          --stack-name lunchplannerv2 \
-          --capabilities CAPABILITY_IAM \
-          --region eu-central-1 \
-          --no-fail-on-empty-changeset
+        run: aws cloudformation deploy --template-file gen/template-generated.yaml --stack-name lunchplannerv2 --capabilities CAPABILITY_IAM --region eu-central-1 --no-fail-on-empty-changeset
