@@ -78,12 +78,6 @@ Resources:
             Path: /meals
             Method: post
             RestApiId: !Ref LunchplannerApi
-        ApiEventOptions:
-          Type: Api
-          Properties:
-            Path: /meals
-            Method: options
-            RestApiId: !Ref LunchplannerApi
       Policies:
         - DynamoDBCrudPolicy:
             TableName: LunchplannerV2-Meals
@@ -119,12 +113,6 @@ Resources:
             Path: /ingredients
             Method: post
             RestApiId: !Ref LunchplannerApi
-        ApiEventOptions:
-          Type: Api
-          Properties:
-            Path: /ingredients
-            Method: options
-            RestApiId: !Ref LunchplannerApi
       Policies:
         - DynamoDBCrudPolicy:
             TableName: LunchplannerV2-MealIngredients
@@ -159,12 +147,6 @@ Resources:
           Properties:
             Path: /shoppingLists
             Method: post
-            RestApiId: !Ref LunchplannerApi
-        ApiEventOptions:
-          Type: Api
-          Properties:
-            Path: /shoppingLists
-            Method: options
             RestApiId: !Ref LunchplannerApi
       Policies:
         - DynamoDBCrudPolicy:
