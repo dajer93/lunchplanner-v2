@@ -106,7 +106,6 @@ async function getAllMeals() {
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({
-            hello: 'world',
             meals,
             count: meals.length
         })
