@@ -83,6 +83,7 @@ async function getMealById(mealId) {
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({
+            hello: 'world',
             meal: unmarshall(Item)
         })
     };

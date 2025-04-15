@@ -1,0 +1,10 @@
+{
+    "name": "lunchplanner-v2",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "start": "cd src/client && npm run dev",
+        "build": "cd src/client && npm run build",
+        "install:all": "cd src/client && npm install && cd ../../src/lambda/ingredients && npm install && cd ../meals && npm install && cd ../shoppingLists && npm install"
+    }
+}

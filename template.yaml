@@ -1,0 +1,183 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lunchplanner V2 API
+
+Globals:
+  Api:
+    Cors:
+      AllowMethods: "'GET, POST, PUT, DELETE, OPTIONS'"
+      AllowHeaders: "'Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token'"
+      AllowOrigin: "'*'"
+    Auth:
+      DefaultAuthorizer: CognitoAuthorizer
+      AddDefaultAuthorizerToCorsPreflight: false
+      Authorizers:
+        CognitoAuthorizer:
+          UserPoolArn: "arn:aws:cognito-idp:eu-central-1:535002862952:userpool/eu-central-1_FRd37FSmj"
+    GatewayResponses:
+      DEFAULT_4XX:
+        ResponseParameters:
+          Headers:
+            Access-Control-Allow-Origin: "'*'"
+            Access-Control-Allow-Headers: "'Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token'"
+            Access-Control-Allow-Methods: "'GET, POST, PUT, DELETE, OPTIONS'"
+      DEFAULT_5XX:
+        ResponseParameters:
+          Headers:
+            Access-Control-Allow-Origin: "'*'"
+            Access-Control-Allow-Headers: "'Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token'"
+            Access-Control-Allow-Methods: "'GET, POST, PUT, DELETE, OPTIONS'"
+  Function:
+    Timeout: 30
+    Environment:
+      Variables:
+        STAGE: dev
+
+Resources:
+  # API Gateway
+  LunchplannerApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      Cors:
+        AllowMethods: "'GET, POST, PUT, DELETE, OPTIONS'"
+        AllowHeaders: "'Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: "arn:aws:cognito-idp:eu-central-1:535002862952:userpool/eu-central-1_FRd37FSmj"
+
+  # Cognito User Pool Client - Use existing pool
+  LunchplannerUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: lunchplanner-app-sam
+      UserPoolId: "eu-central-1_FRd37FSmj"
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      PreventUserExistenceErrors: ENABLED
+
+  # Meals Functions
+  LunchplannerV2AddMeal:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/meals/
+      Handler: addMeal.handler
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /meals
+            Method: post
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-Meals
+
+  LunchplannerV2GetMeals:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/meals/
+      Handler: getMeals.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /meals
+            Method: get
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-Meals
+
+  # Ingredients Functions
+  LunchplannerV2AddIngredient:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/ingredients/
+      Handler: addIngredient.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /ingredients
+            Method: post
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-MealIngredients
+
+  LunchplannerV2GetIngredients:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/ingredients/
+      Handler: getIngredients.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /ingredients
+            Method: get
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-MealIngredients
+
+  # Shopping List Functions
+  LunchplannerV2AddShoppingList:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/shoppingLists/
+      Handler: addShoppingList.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /shoppingLists
+            Method: post
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-ShoppingLists
+
+  LunchplannerV2GetShoppingLists:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/shoppingLists/
+      Handler: getShoppingLists.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /shoppingLists
+            Method: get
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-ShoppingLists
+
+Outputs:
+  ApiURL:
+    Description: "API Gateway endpoint URL for dev stage"
+    Value: !Sub "https://${LunchplannerApi}.execute-api.${AWS::Region}.amazonaws.com/dev/"
+  
+  UserPoolId:
+    Description: "ID of the Cognito User Pool"
+    Value: "eu-central-1_FRd37FSmj"
+  
+  UserPoolClientId:
+    Description: "ID of the Cognito User Pool Client"
+    Value: !Ref LunchplannerUserPoolClient

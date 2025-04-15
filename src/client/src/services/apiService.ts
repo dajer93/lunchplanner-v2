@@ -1,7 +1,8 @@
 import { Ingredient, Meal, ShoppingList } from '../types';
 import { getAuthToken, signOut } from './authService';
 
-const API_URL = 'https://evplabpje9.execute-api.eu-central-1.amazonaws.com/dev';
+// const API_URL = 'https://evplabpje9.execute-api.eu-central-1.amazonaws.com/dev';
+const API_URL = 'https://dqyn7lk8qb.execute-api.eu-central-1.amazonaws.com/dev';
 
 // Singleton for token expiration handling to prevent multiple redirects
 class TokenExpirationHandler {
