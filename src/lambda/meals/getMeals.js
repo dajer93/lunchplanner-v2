@@ -83,7 +83,6 @@ async function getMealById(mealId) {
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({
-            hello: 'world',
             meal: unmarshall(Item)
         })
     };
@@ -107,6 +106,7 @@ async function getAllMeals() {
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({
+            hello: 'world',
             meals,
             count: meals.length
         })
