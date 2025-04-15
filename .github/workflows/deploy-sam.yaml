@@ -40,3 +40,21 @@ jobs:
           
       - name: SAM deploy
         run: aws cloudformation deploy --template-file gen/template-generated.yaml --stack-name lunchplannerv2 --capabilities CAPABILITY_IAM --region eu-central-1 --no-fail-on-empty-changeset
+
+      - name: Install dependencies
+        run: |
+          cd src/client
+          npm ci
+      
+      - name: Build app
+        run: |
+          cd src/client
+          npm run build
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync src/client/build/ s3://lunchplanner-v2-client/ --delete
+      
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation --distribution-id E37IKOJFJFNNIL --paths "/*"
