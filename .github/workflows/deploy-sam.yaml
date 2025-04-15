@@ -22,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
           
       - name: Install SAM CLI
         run: |
@@ -53,7 +53,7 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          aws s3 sync src/client/build/ s3://lunchplanner-v2-client/ --delete
+          aws s3 sync src/client/dist/ s3://lunchplanner-v2-client/ --delete
       
       - name: Invalidate CloudFront
         run: |
