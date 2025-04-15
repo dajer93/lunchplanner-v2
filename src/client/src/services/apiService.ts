@@ -1,7 +1,35 @@
 import { Ingredient, Meal, ShoppingList } from '../types';
-import { getAuthToken } from './authService';
+import { getAuthToken, signOut } from './authService';
 
 const API_URL = 'https://evplabpje9.execute-api.eu-central-1.amazonaws.com/dev';
+
+// Singleton for token expiration handling to prevent multiple redirects
+class TokenExpirationHandler {
+  private static instance: TokenExpirationHandler;
+  private isHandlingExpiration = false;
+
+  private constructor() {}
+
+  public static getInstance(): TokenExpirationHandler {
+    if (!TokenExpirationHandler.instance) {
+      TokenExpirationHandler.instance = new TokenExpirationHandler();
+    }
+    return TokenExpirationHandler.instance;
+  }
+
+  public handleExpiration(): void {
+    if (this.isHandlingExpiration) return;
+    
+    this.isHandlingExpiration = true;
+    console.log('Token expired, logging out...');
+    
+    // Perform logout
+    signOut();
+    
+    // Redirect to login page
+    window.location.href = '/login';
+  }
+}
 
 const getHeaders = () => {
   const token = getAuthToken();
@@ -16,11 +44,26 @@ const handleResponse = async (response: Response) => {
     try {
       const errorData = await response.json();
       console.error('API error response:', errorData);
+      
+      // Check for token expiration (401 Unauthorized with specific message)
+      if (response.status === 401 && 
+          errorData.message && 
+          (errorData.message.includes('expired') || 
+           errorData.message.includes('token'))) {
+        TokenExpirationHandler.getInstance().handleExpiration();
+      }
+      
       throw new Error(errorData.message || 'API request failed');
     } catch (e) {
       // If parsing JSON fails, use text instead
       const errorText = await response.text();
       console.error(`HTTP error ${response.status}:`, errorText);
+      
+      // Also check for 401 status code here
+      if (response.status === 401) {
+        TokenExpirationHandler.getInstance().handleExpiration();
+      }
+      
       throw new Error(errorText || `HTTP error ${response.status}`);
     }
   }
