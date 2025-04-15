@@ -1,5 +1,5 @@
-const { DynamoDBClient, PutItemCommand } = require('@aws-sdk/client-dynamodb');
-const { marshall } = require('@aws-sdk/util-dynamodb');
+const { DynamoDBClient, PutItemCommand, QueryCommand, ScanCommand } = require('@aws-sdk/client-dynamodb');
+const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 const { v4: uuidv4 } = require('uuid');
 
 const dynamoDbClient = new DynamoDBClient({ region: 'eu-central-1' });
@@ -14,6 +14,7 @@ const corsHeaders = {
 
 /**
  * Lambda function to add an ingredient to the DynamoDB LunchplannerV2-Ingredients table
+ * If the ingredient already exists, it returns the existing ingredient instead of creating a new one.
  * 
  * @param {Object} event - Lambda event object
  * @param {string} event.ingredientName - Name of the ingredient
@@ -43,6 +44,31 @@ exports.handler = async (event) => {
                 statusCode: 400,
                 headers: corsHeaders,
                 body: JSON.stringify({ message: 'ingredientName is required' })
+            };
+        }
+        
+        // Check if the ingredient already exists
+        const scanParams = {
+            TableName: 'LunchplannerV2-MealIngredients',
+            FilterExpression: 'ingredientName = :name',
+            ExpressionAttributeValues: marshall({
+                ':name': ingredientName
+            })
+        };
+        
+        const scanResponse = await dynamoDbClient.send(new ScanCommand(scanParams));
+        
+        // If ingredient exists, return it
+        if (scanResponse.Items && scanResponse.Items.length > 0) {
+            const existingIngredient = unmarshall(scanResponse.Items[0]);
+            
+            return {
+                statusCode: 200,
+                headers: corsHeaders,
+                body: JSON.stringify({
+                    message: 'Ingredient already exists',
+                    ingredient: existingIngredient
+                })
             };
         }
         
