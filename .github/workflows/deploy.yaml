@@ -53,18 +53,8 @@ jobs:
           npm ci
           zip -r function.zip ./*
           
-          # Return to root and show files
+          # Return to root
           cd ../../..
-      
-      - name: Create deployment template
-        run: |
-          # Create a copy of template.yaml with updated CodeUri paths
-          cp template.yaml template-deploy.yaml
-          
-          # Update CodeUri paths to point to zip files
-          
-          # Debug: show the modified template
-          grep -A 3 "CodeUri:" template-deploy.yaml
           
       - name: SAM Package
         run: aws cloudformation package --s3-bucket lunchplannerv2-lambdas --template-file template.yaml --output-template-file gen/template-generated.yaml

@@ -47,11 +47,11 @@ exports.handler = async (event) => {
         }
         
         // Generate a unique ID for the shopping list
-        const shoppingListId = uuidv4();
+        const listId = uuidv4();
         
         // Create the shopping list item
         const shoppingList = {
-            shoppingListId,
+            listId,
             mealIds,
             createdAt: new Date().toISOString() // Add timestamp for sorting/filtering
         };
