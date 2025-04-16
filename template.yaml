@@ -66,7 +66,7 @@ Resources:
   LunchplannerV2AddMeal:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./src/lambda/meals/
+      CodeUri: ./src/lambda/meals/function.zip
       Handler: addMeal.handler
       Runtime: nodejs18.x
       Architectures:
@@ -85,7 +85,7 @@ Resources:
   LunchplannerV2GetMeals:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./src/lambda/meals/
+      CodeUri: ./src/lambda/meals/function.zip
       Handler: getMeals.handler
       Runtime: nodejs18.x
       Events:
@@ -103,7 +103,7 @@ Resources:
   LunchplannerV2AddIngredient:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./src/lambda/ingredients/
+      CodeUri: ./src/lambda/ingredients/function.zip
       Handler: addIngredient.handler
       Runtime: nodejs18.x
       Events:
@@ -120,7 +120,7 @@ Resources:
   LunchplannerV2GetIngredients:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./src/lambda/ingredients/
+      CodeUri: ./src/lambda/ingredients/function.zip
       Handler: getIngredients.handler
       Runtime: nodejs18.x
       Events:
@@ -138,7 +138,7 @@ Resources:
   LunchplannerV2AddShoppingList:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./src/lambda/shoppingLists/
+      CodeUri: ./src/lambda/shoppingLists/function.zip
       Handler: addShoppingList.handler
       Runtime: nodejs18.x
       Events:
@@ -155,7 +155,7 @@ Resources:
   LunchplannerV2GetShoppingLists:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./src/lambda/shoppingLists/
+      CodeUri: ./src/lambda/shoppingLists/function.zip
       Handler: getShoppingLists.handler
       Runtime: nodejs18.x
       Events:
