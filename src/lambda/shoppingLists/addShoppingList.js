@@ -82,11 +82,11 @@ exports.handler = async (event) => {
         }
         
         // Generate a unique ID for the shopping list
-        const shoppingListId = uuidv4();
+        const listId = uuidv4();
         
         // Create the shopping list item
         const shoppingList = {
-            shoppingListId,
+            listId,
             userId, // Associate shopping list with the authenticated user
             name,
             mealIds,
