@@ -41,7 +41,6 @@ function extractUserId(event) {
  * 
  * @param {Object} event - Lambda event object
  * @param {string} event.ingredientName - Name of the ingredient
- * @param {string} event.category - Category of the ingredient (e.g., Vegetable, Meat, Dairy)
  * @param {string} event.unit - Unit of measurement (e.g., g, kg, pcs)
  * @returns {Object} - Response containing the ingredient details
  */
@@ -72,7 +71,7 @@ exports.handler = async (event) => {
             ? JSON.parse(event.body) 
             : event.body || event;
         
-        const { ingredientName, category, unit } = requestBody;
+        const { ingredientName, unit } = requestBody;
         
         // Validate input
         if (!ingredientName) {
@@ -116,7 +115,6 @@ exports.handler = async (event) => {
             ingredientId,
             userId, // Associate ingredient with the authenticated user
             ingredientName,
-            category: category || 'Other',
             unit: unit || 'pcs',
             createdAt: new Date().toISOString()
         };

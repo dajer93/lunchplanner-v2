@@ -39,8 +39,8 @@ function extractUserId(event) {
  * Lambda function to add a shopping list to the DynamoDB LunchplannerV2-ShoppingLists table
  * 
  * @param {Object} event - Lambda event object
- * @param {string} event.listName - Name of the shopping list
- * @param {Array} event.items - Array of shopping list items
+ * @param {string} event.name - Name of the shopping list
+ * @param {Array} event.mealIds - Array of shopping list items
  * @returns {Object} - Response containing the shopping list details
  */
 exports.handler = async (event) => {
@@ -70,10 +70,10 @@ exports.handler = async (event) => {
             ? JSON.parse(event.body) 
             : event.body || event;
         
-        const { listName, items } = requestBody;
+        const { name, mealIds } = requestBody;
         
         // Validate input
-        if (!listName) {
+        if (!name) {
             return {
                 statusCode: 400,
                 headers: corsHeaders,
@@ -88,8 +88,8 @@ exports.handler = async (event) => {
         const shoppingList = {
             shoppingListId,
             userId, // Associate shopping list with the authenticated user
-            listName,
-            items: items || [],
+            name,
+            mealIds,
             createdAt: new Date().toISOString()
         };
         
