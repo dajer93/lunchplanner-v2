@@ -1,13 +1,22 @@
-import { FC, ReactNode } from "react";
+import { FC, ReactNode, useState } from "react";
 import {
   AppBar,
   Box,
   Button,
   Container,
+  Drawer,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
   Toolbar,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import MenuIcon from "@mui/icons-material/Menu";
+import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import pkg from "../../package.json";
 
@@ -18,11 +27,61 @@ interface LayoutProps {
 const Layout: FC<LayoutProps> = ({ children }) => {
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
+
+  const toggleDrawer = () => {
+    setDrawerOpen(!drawerOpen);
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+  };
+
+  // Navigation items based on authentication status
+  const navItems = isAuthenticated
+    ? [
+        { text: "Meals", path: "/meals" },
+        { text: "Shopping Lists", path: "/shopping-lists" },
+        { text: "Logout", action: handleLogout },
+      ]
+    : [
+        { text: "Login", path: "/login" },
+        { text: "Register", path: "/register" },
+        { text: "Verify Account", path: "/verify" },
+      ];
+
+  // Drawer content
+  const drawer = (
+    <Box onClick={closeDrawer} sx={{ width: 250 }}>
+      <List>
+        {navItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            {item.path ? (
+              <ListItemButton
+                component={RouterLink}
+                to={item.path}
+                selected={location.pathname === item.path}
+              >
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            ) : (
+              <ListItemButton onClick={item.action}>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            )}
+          </ListItem>
+        ))}
+      </List>
+    </Box>
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
@@ -37,37 +96,43 @@ const Layout: FC<LayoutProps> = ({ children }) => {
             Meal Planner
           </Typography>
 
-          {isAuthenticated ? (
+          {!isMobile && (
             <>
-              <Button color="inherit" component={RouterLink} to="/meals">
-                Meals
-              </Button>
-              <Button
-                color="inherit"
-                component={RouterLink}
-                to="/shopping-lists"
-              >
-                Shopping Lists
-              </Button>
-              <Button color="inherit" onClick={handleLogout}>
-                Logout
-              </Button>
+              {navItems.map((item) =>
+                item.path ? (
+                  <Button
+                    key={item.text}
+                    color="inherit"
+                    component={RouterLink}
+                    to={item.path}
+                  >
+                    {item.text}
+                  </Button>
+                ) : (
+                  <Button key={item.text} color="inherit" onClick={item.action}>
+                    {item.text}
+                  </Button>
+                ),
+              )}
             </>
-          ) : (
-            <>
-              <Button color="inherit" component={RouterLink} to="/login">
-                Login
-              </Button>
-              <Button color="inherit" component={RouterLink} to="/register">
-                Register
-              </Button>
-              <Button color="inherit" component={RouterLink} to="/verify">
-                Verify Account
-              </Button>
-            </>
+          )}
+
+          {isMobile && (
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              onClick={toggleDrawer}
+              sx={{ ml: 1 }}
+            >
+              <MenuIcon />
+            </IconButton>
           )}
         </Toolbar>
       </AppBar>
+
+      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer}>
+        {drawer}
+      </Drawer>
 
       <Container
         component="main"
