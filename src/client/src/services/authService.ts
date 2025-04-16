@@ -19,7 +19,32 @@ export const signUp = async (username: string, password: string): Promise<AuthRe
       if (err) {
         resolve({ success: false, message: err.message });
       } else {
-        resolve({ success: true, message: 'User registration successful!' });
+        resolve({ success: true, message: 'User registration successful! Please check your email for verification code.' });
+      }
+    });
+  });
+};
+
+export const confirmRegistration = async (username: string, confirmationCode: string): Promise<AuthResult> => {
+  return new Promise((resolve) => {
+    const userData = {
+      Username: username,
+      Pool: userPool
+    };
+
+    const cognitoUser = new CognitoUser(userData);
+
+    cognitoUser.confirmRegistration(confirmationCode, true, (err, result) => {
+      if (err) {
+        resolve({
+          success: false,
+          message: err.message || 'Failed to verify account'
+        });
+      } else {
+        resolve({
+          success: true,
+          message: 'Account verified successfully!'
+        });
       }
     });
   });

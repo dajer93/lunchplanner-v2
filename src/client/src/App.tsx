@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import HomePage from './components/HomePage';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
+import VerifyAccount from './components/Auth/VerifyAccount';
 import MealsPage from './components/Meals/MealsPage';
 import ShoppingListsPage from './components/ShoppingLists/ShoppingListsPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
@@ -32,6 +33,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/verify" element={<VerifyAccount />} />
               <Route 
                 path="/meals" 
                 element={

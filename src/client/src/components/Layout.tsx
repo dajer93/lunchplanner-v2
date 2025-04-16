@@ -44,6 +44,9 @@ const Layout: FC<LayoutProps> = ({ children }) => {
               <Button color="inherit" component={RouterLink} to="/register">
                 Register
               </Button>
+              <Button color="inherit" component={RouterLink} to="/verify">
+                Verify Account
+              </Button>
             </>
           )}
         </Toolbar>

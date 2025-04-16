@@ -35,7 +35,7 @@ const Register = () => {
     
     const success = await register(username, password);
     if (success) {
-      navigate('/login');
+      navigate('/verify', { state: { username } });
     }
   };
 
