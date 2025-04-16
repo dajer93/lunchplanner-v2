@@ -34,7 +34,7 @@ export const confirmRegistration = async (username: string, confirmationCode: st
 
     const cognitoUser = new CognitoUser(userData);
 
-    cognitoUser.confirmRegistration(confirmationCode, true, (err, result) => {
+    cognitoUser.confirmRegistration(confirmationCode, true, (err) => {
       if (err) {
         resolve({
           success: false,
