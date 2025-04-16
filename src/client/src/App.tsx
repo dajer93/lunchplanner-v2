@@ -15,8 +15,22 @@ import MealsPage from "./components/Meals/MealsPage";
 import ShoppingListsPage from "./components/ShoppingLists/ShoppingListsPage";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 
-// Create a theme with default MUI colors and global link styling
+// Create a theme with custom colors
 const theme = createTheme({
+  palette: {
+    primary: {
+      main: "#E9D985",
+    },
+    secondary: {
+      main: "#4392F1",
+    },
+    background: {
+      default: "#E3EBFF",
+    },
+    text: {
+      primary: "#494947",
+    },
+  },
   components: {
     MuiLink: {
       styleOverrides: {

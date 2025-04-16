@@ -1,6 +1,6 @@
-import { Box, Button, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Box, Button, Typography } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const HomePage = () => {
   const { isAuthenticated, username } = useAuth();
@@ -8,22 +8,27 @@ const HomePage = () => {
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '60vh',
-        textAlign: 'center',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "60vh",
+        textAlign: "center",
       }}
     >
       <Typography variant="h3" component="h1" gutterBottom>
-        Welcome to Meal Planner
+        Welcome to Lunchplanner
       </Typography>
-      
-      <Typography variant="h5" component="h2" gutterBottom color="text.secondary">
+
+      <Typography
+        variant="h5"
+        component="h2"
+        gutterBottom
+        color="text.secondary"
+      >
         Plan your meals and generate shopping lists with ease
       </Typography>
-      
+
       {isAuthenticated ? (
         <Box sx={{ mt: 4 }}>
           <Typography variant="h6" gutterBottom>
@@ -41,7 +46,7 @@ const HomePage = () => {
           </Button>
         </Box>
       ) : (
-        <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+        <Box sx={{ mt: 4, display: "flex", gap: 2 }}>
           <Button
             component={RouterLink}
             to="/login"
@@ -66,4 +71,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage; 
+export default HomePage;

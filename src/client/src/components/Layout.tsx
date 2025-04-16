@@ -45,20 +45,20 @@ const Layout: FC<LayoutProps> = ({ children }) => {
     setDrawerOpen(false);
   };
 
-  // Navigation items based on authentication status
   const navItems = isAuthenticated
     ? [
+        ...(isMobile ? [{ text: "Lunchplanner", path: "/" }] : []),
         { text: "Meals", path: "/meals" },
         { text: "Shopping Lists", path: "/shopping-lists" },
         { text: "Logout", action: handleLogout },
       ]
     : [
+        ...(isMobile ? [{ text: "Lunchplanner", path: "/" }] : []),
         { text: "Login", path: "/login" },
         { text: "Register", path: "/register" },
         { text: "Verify Account", path: "/verify" },
       ];
 
-  // Drawer content
   const drawer = (
     <Box onClick={closeDrawer} sx={{ width: 250 }}>
       <List>
@@ -93,7 +93,7 @@ const Layout: FC<LayoutProps> = ({ children }) => {
             to="/"
             sx={{ flexGrow: 1, textDecoration: "none" }}
           >
-            Meal Planner
+            Lunchplanner
           </Typography>
 
           {!isMobile && (
@@ -130,7 +130,7 @@ const Layout: FC<LayoutProps> = ({ children }) => {
         </Toolbar>
       </AppBar>
 
-      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer}>
+      <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer}>
         {drawer}
       </Drawer>
 
