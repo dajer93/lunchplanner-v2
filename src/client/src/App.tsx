@@ -19,10 +19,10 @@ import ProtectedRoute from "./components/Auth/ProtectedRoute";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#E9D985",
+      main: "#3772FF",
     },
     secondary: {
-      main: "#4392F1",
+      main: "#E9D985",
     },
     background: {
       default: "#E3EBFF",

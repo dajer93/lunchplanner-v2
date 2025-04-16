@@ -1,26 +1,26 @@
-import { useEffect, useState } from 'react';
-import { 
+import { useEffect, useState } from "react";
+import {
   Alert,
-  Box, 
-  Button, 
-  Checkbox, 
-  CircularProgress, 
-  Divider, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
-  Typography 
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import { addShoppingList, getMeals } from '../../services/apiService';
-import { Meal } from '../../types';
-import NewMealDialog from './NewMealDialog';
-import { useNavigate } from 'react-router-dom';
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  Divider,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import { addShoppingList, getMeals } from "../../services/apiService";
+import { Meal } from "../../types";
+import NewMealDialog from "./NewMealDialog";
+import { useNavigate } from "react-router-dom";
 
 const MealsPage = () => {
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -39,13 +39,13 @@ const MealsPage = () => {
   const fetchMeals = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const fetchedMeals = await getMeals();
       setMeals(fetchedMeals);
     } catch (err) {
-      console.error('Error fetching meals:', err);
-      setError('Failed to load meals. Please try again later.');
+      console.error("Error fetching meals:", err);
+      setError("Failed to load meals. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -53,13 +53,13 @@ const MealsPage = () => {
 
   const handleToggleMeal = (mealId: string) => {
     const newSelectedMeals = new Set(selectedMeals);
-    
+
     if (newSelectedMeals.has(mealId)) {
       newSelectedMeals.delete(mealId);
     } else {
       newSelectedMeals.add(mealId);
     }
-    
+
     setSelectedMeals(newSelectedMeals);
   };
 
@@ -76,28 +76,28 @@ const MealsPage = () => {
 
   const handleCreateShoppingList = async () => {
     if (selectedMeals.size === 0) {
-      setError('Please select at least one meal');
+      setError("Please select at least one meal");
       return;
     }
-    
+
     setCreatingShoppingList(true);
     setError(null);
-    
+
     try {
       const mealIds = Array.from(selectedMeals);
       const name = `Shopping List - ${new Date().toLocaleDateString()}`;
       await addShoppingList(name, mealIds);
-      
+
       setShoppingListSuccess(true);
       setSelectedMeals(new Set());
-      
+
       // Show success message for 2 seconds before navigating
       setTimeout(() => {
-        navigate('/shopping-lists');
+        navigate("/shopping-lists");
       }, 2000);
     } catch (err) {
-      console.error('Error creating shopping list:', err);
-      setError('Failed to create shopping list. Please try again.');
+      console.error("Error creating shopping list:", err);
+      setError("Failed to create shopping list. Please try again.");
     } finally {
       setCreatingShoppingList(false);
     }
@@ -105,37 +105,44 @@ const MealsPage = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" component="h1">
           Your Meals
         </Typography>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           startIcon={<AddIcon />}
           onClick={handleOpenNewMealDialog}
         >
           Add New Meal
         </Button>
       </Box>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
-      
+
       {shoppingListSuccess && (
         <Alert severity="success" sx={{ mb: 3 }}>
           Shopping list created successfully! Redirecting to shopping lists...
         </Alert>
       )}
-      
+
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
           <CircularProgress />
         </Box>
       ) : meals.length === 0 ? (
-        <Paper sx={{ p: 3, textAlign: 'center' }}>
+        <Paper sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="body1">
             You don't have any meals yet. Create your first meal to get started!
           </Typography>
@@ -149,7 +156,6 @@ const MealsPage = () => {
                   <TableCell padding="checkbox">Select</TableCell>
                   <TableCell>Meal Name</TableCell>
                   <TableCell>Number of Ingredients</TableCell>
-                  <TableCell>Created At</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -163,18 +169,21 @@ const MealsPage = () => {
                     </TableCell>
                     <TableCell>{meal.mealName}</TableCell>
                     <TableCell>{meal.ingredients.length}</TableCell>
-                    <TableCell>
-                      {meal.createdAt ? new Date(meal.createdAt).toLocaleString() : 'N/A'}
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
-          
+
           <Divider sx={{ my: 3 }} />
-          
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Typography variant="h6">
               Selected Meals: {selectedMeals.size}
             </Typography>
@@ -185,15 +194,18 @@ const MealsPage = () => {
               onClick={handleCreateShoppingList}
               disabled={selectedMeals.size === 0 || creatingShoppingList}
             >
-              {creatingShoppingList ? 'Creating...' : 'Create Shopping List'}
+              {creatingShoppingList ? "Creating..." : "Create Shopping List"}
             </Button>
           </Box>
         </>
       )}
-      
-      <NewMealDialog open={openNewMealDialog} onClose={handleCloseNewMealDialog} />
+
+      <NewMealDialog
+        open={openNewMealDialog}
+        onClose={handleCloseNewMealDialog}
+      />
     </Box>
   );
 };
 
-export default MealsPage; 
+export default MealsPage;
