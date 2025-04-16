@@ -1,6 +1,6 @@
 {
   "name": "lunchplanner-v2-shopping-lists-lambda",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Lambda functions for handling shopping lists in the LunchPlanner V2 application",
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.470.0",
