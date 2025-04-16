@@ -13,11 +13,34 @@ const corsHeaders = {
 };
 
 /**
+ * Extract user ID from the Cognito authorizer context
+ * 
+ * @param {Object} event - Lambda event object
+ * @returns {string|null} - User ID or null if not found
+ */
+function extractUserId(event) {
+    try {
+        // The user ID is available in the requestContext from API Gateway when using Cognito authorizer
+        if (event.requestContext && event.requestContext.authorizer && event.requestContext.authorizer.claims) {
+            // 'sub' is the user ID in Cognito claims
+            return event.requestContext.authorizer.claims.sub;
+        }
+        
+        // If running locally or in a test environment without a proper authorizer
+        console.warn('No user ID found in request context');
+        return null;
+    } catch (error) {
+        console.error('Error extracting user ID:', error);
+        return null;
+    }
+}
+
+/**
  * Lambda function to add a shopping list to the DynamoDB LunchplannerV2-ShoppingLists table
  * 
  * @param {Object} event - Lambda event object
- * @param {string} event.name - Name of the shopping list
- * @param {string[]} event.mealIds - Array of meal IDs included in this shopping list
+ * @param {string} event.listName - Name of the shopping list
+ * @param {Array} event.items - Array of shopping list items
  * @returns {Object} - Response containing the shopping list details
  */
 exports.handler = async (event) => {
@@ -31,29 +54,43 @@ exports.handler = async (event) => {
     }
     
     try {
+        // Extract user ID from Cognito context
+        const userId = extractUserId(event);
+        
+        if (!userId) {
+            return {
+                statusCode: 401,
+                headers: corsHeaders,
+                body: JSON.stringify({ message: 'User not authenticated' })
+            };
+        }
+        
         // Parse request body if it's a string
         const requestBody = typeof event.body === 'string' 
             ? JSON.parse(event.body) 
             : event.body || event;
         
-        const { mealIds } = requestBody;
+        const { listName, items } = requestBody;
         
-        if (!mealIds || !Array.isArray(mealIds)) {
+        // Validate input
+        if (!listName) {
             return {
                 statusCode: 400,
                 headers: corsHeaders,
-                body: JSON.stringify({ message: 'mealIds must be an array' })
+                body: JSON.stringify({ message: 'listName is required' })
             };
         }
         
         // Generate a unique ID for the shopping list
-        const listId = uuidv4();
+        const shoppingListId = uuidv4();
         
         // Create the shopping list item
         const shoppingList = {
-            listId,
-            mealIds,
-            createdAt: new Date().toISOString() // Add timestamp for sorting/filtering
+            shoppingListId,
+            userId, // Associate shopping list with the authenticated user
+            listName,
+            items: items || [],
+            createdAt: new Date().toISOString()
         };
         
         // Prepare the DynamoDB put command

@@ -13,11 +13,36 @@ const corsHeaders = {
 };
 
 /**
- * Lambda function to add an ingredient to the DynamoDB LunchplannerV2-Ingredients table
+ * Extract user ID from the Cognito authorizer context
+ * 
+ * @param {Object} event - Lambda event object
+ * @returns {string|null} - User ID or null if not found
+ */
+function extractUserId(event) {
+    try {
+        // The user ID is available in the requestContext from API Gateway when using Cognito authorizer
+        if (event.requestContext && event.requestContext.authorizer && event.requestContext.authorizer.claims) {
+            // 'sub' is the user ID in Cognito claims
+            return event.requestContext.authorizer.claims.sub;
+        }
+        
+        // If running locally or in a test environment without a proper authorizer
+        console.warn('No user ID found in request context');
+        return null;
+    } catch (error) {
+        console.error('Error extracting user ID:', error);
+        return null;
+    }
+}
+
+/**
+ * Lambda function to add an ingredient to the DynamoDB LunchplannerV2-MealIngredients table
  * If the ingredient already exists, it returns the existing ingredient instead of creating a new one.
  * 
  * @param {Object} event - Lambda event object
  * @param {string} event.ingredientName - Name of the ingredient
+ * @param {string} event.category - Category of the ingredient (e.g., Vegetable, Meat, Dairy)
+ * @param {string} event.unit - Unit of measurement (e.g., g, kg, pcs)
  * @returns {Object} - Response containing the ingredient details
  */
 exports.handler = async (event) => {
@@ -31,12 +56,23 @@ exports.handler = async (event) => {
     }
     
     try {
+        // Extract user ID from Cognito context
+        const userId = extractUserId(event);
+        
+        if (!userId) {
+            return {
+                statusCode: 401,
+                headers: corsHeaders,
+                body: JSON.stringify({ message: 'User not authenticated' })
+            };
+        }
+        
         // Parse request body if it's a string
         const requestBody = typeof event.body === 'string' 
             ? JSON.parse(event.body) 
             : event.body || event;
         
-        const { ingredientName } = requestBody;
+        const { ingredientName, category, unit } = requestBody;
         
         // Validate input
         if (!ingredientName) {
@@ -78,7 +114,11 @@ exports.handler = async (event) => {
         // Create the ingredient item
         const ingredient = {
             ingredientId,
-            ingredientName
+            userId, // Associate ingredient with the authenticated user
+            ingredientName,
+            category: category || 'Other',
+            unit: unit || 'pcs',
+            createdAt: new Date().toISOString()
         };
         
         // Prepare the DynamoDB put command

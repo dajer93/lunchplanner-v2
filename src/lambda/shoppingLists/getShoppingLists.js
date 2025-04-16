@@ -12,12 +12,35 @@ const corsHeaders = {
 };
 
 /**
+ * Extract user ID from the Cognito authorizer context
+ * 
+ * @param {Object} event - Lambda event object
+ * @returns {string|null} - User ID or null if not found
+ */
+function extractUserId(event) {
+    try {
+        // The user ID is available in the requestContext from API Gateway when using Cognito authorizer
+        if (event.requestContext && event.requestContext.authorizer && event.requestContext.authorizer.claims) {
+            // 'sub' is the user ID in Cognito claims
+            return event.requestContext.authorizer.claims.sub;
+        }
+        
+        // If running locally or in a test environment without a proper authorizer
+        console.warn('No user ID found in request context');
+        return null;
+    } catch (error) {
+        console.error('Error extracting user ID:', error);
+        return null;
+    }
+}
+
+/**
  * Lambda function to retrieve shopping lists from the DynamoDB LunchplannerV2-ShoppingLists table
  * Can retrieve a single shopping list by ID or all shopping lists
  * 
  * @param {Object} event - Lambda event object
  * @param {Object} event.pathParameters - Path parameters (if any)
- * @param {string} event.pathParameters.shoppingListId - Optional shopping list ID to retrieve a specific list
+ * @param {string} event.pathParameters.shoppingListId - Optional shopping list ID
  * @returns {Object} - Response containing the shopping list(s)
  */
 exports.handler = async (event) => {
@@ -31,15 +54,26 @@ exports.handler = async (event) => {
     }
     
     try {
+        // Extract user ID from Cognito context
+        const userId = extractUserId(event);
+        
+        if (!userId) {
+            return {
+                statusCode: 401,
+                headers: corsHeaders,
+                body: JSON.stringify({ message: 'User not authenticated' })
+            };
+        }
+        
         // Check if a specific shoppingListId was provided
         const shoppingListId = event.pathParameters?.shoppingListId;
         
         if (shoppingListId) {
             // Get a specific shopping list by ID
-            return await getShoppingListById(shoppingListId);
+            return await getShoppingListById(shoppingListId, userId);
         } else {
             // Get all shopping lists
-            return await getAllShoppingLists();
+            return await getAllShoppingLists(userId);
         }
     } catch (error) {
         console.error('Error retrieving shopping lists:', error);
@@ -59,9 +93,10 @@ exports.handler = async (event) => {
  * Retrieves a specific shopping list from DynamoDB by its ID
  * 
  * @param {string} shoppingListId - The ID of the shopping list to retrieve
+ * @param {string} userId - The ID of the current user
  * @returns {Object} - Response containing the shopping list
  */
-async function getShoppingListById(shoppingListId) {
+async function getShoppingListById(shoppingListId, userId) {
     const params = {
         TableName: 'LunchplannerV2-ShoppingLists',
         Key: marshall({ shoppingListId })
@@ -79,23 +114,41 @@ async function getShoppingListById(shoppingListId) {
         };
     }
     
+    const shoppingList = unmarshall(Item);
+    
+    // Check if this shopping list belongs to the current user
+    if (shoppingList.userId && shoppingList.userId !== userId) {
+        return {
+            statusCode: 403,
+            headers: corsHeaders,
+            body: JSON.stringify({ 
+                message: 'You do not have permission to access this shopping list' 
+            })
+        };
+    }
+    
     return {
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({
-            shoppingList: unmarshall(Item)
+            shoppingList
         })
     };
 }
 
 /**
- * Retrieves all shopping lists from the DynamoDB table
+ * Retrieves all shopping lists from the DynamoDB table for a specific user
  * 
+ * @param {string} userId - The ID of the current user
  * @returns {Object} - Response containing all shopping lists
  */
-async function getAllShoppingLists() {
+async function getAllShoppingLists(userId) {
     const params = {
-        TableName: 'LunchplannerV2-ShoppingLists'
+        TableName: 'LunchplannerV2-ShoppingLists',
+        FilterExpression: 'userId = :userId',
+        ExpressionAttributeValues: marshall({
+            ':userId': userId
+        })
     };
     
     const { Items } = await dynamoDbClient.send(new ScanCommand(params));
@@ -104,7 +157,10 @@ async function getAllShoppingLists() {
     
     // Sort shopping lists by createdAt in descending order (newest first)
     shoppingLists.sort((a, b) => {
-        return new Date(b.createdAt) - new Date(a.createdAt);
+        if (a.createdAt && b.createdAt) {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+        return 0;
     });
     
     return {

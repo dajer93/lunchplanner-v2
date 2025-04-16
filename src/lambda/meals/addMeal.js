@@ -13,6 +13,29 @@ const corsHeaders = {
 };
 
 /**
+ * Extract user ID from the Cognito authorizer context
+ * 
+ * @param {Object} event - Lambda event object
+ * @returns {string|null} - User ID or null if not found
+ */
+function extractUserId(event) {
+    try {
+        // The user ID is available in the requestContext from API Gateway when using Cognito authorizer
+        if (event.requestContext && event.requestContext.authorizer && event.requestContext.authorizer.claims) {
+            // 'sub' is the user ID in Cognito claims
+            return event.requestContext.authorizer.claims.sub;
+        }
+        
+        // If running locally or in a test environment without a proper authorizer
+        console.warn('No user ID found in request context');
+        return null;
+    } catch (error) {
+        console.error('Error extracting user ID:', error);
+        return null;
+    }
+}
+
+/**
  * Lambda function to add a meal to the DynamoDB LunchplannerV2-Meals table
  * 
  * @param {Object} event - Lambda event object
@@ -31,6 +54,17 @@ exports.handler = async (event) => {
     }
     
     try {
+        // Extract user ID from Cognito context
+        const userId = extractUserId(event);
+        
+        if (!userId) {
+            return {
+                statusCode: 401,
+                headers: corsHeaders,
+                body: JSON.stringify({ message: 'User not authenticated' })
+            };
+        }
+        
         // Parse request body if it's a string
         const requestBody = typeof event.body === 'string' 
             ? JSON.parse(event.body) 
@@ -61,8 +95,10 @@ exports.handler = async (event) => {
         // Create the meal item
         const meal = {
             mealId,
+            userId, // Associate meal with the authenticated user
             mealName,
-            ingredients
+            ingredients,
+            createdAt: new Date().toISOString()
         };
         
         // Prepare the DynamoDB put command
