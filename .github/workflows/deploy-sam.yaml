@@ -34,6 +34,37 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
+      
+      - name: Install Lambda dependencies and create zip packages
+        run: |
+          # Install dependencies and create zip packages for Lambda functions
+          # Meals Lambda
+          cd src/lambda/meals
+          npm ci
+          zip -r function.zip ./*
+          
+          # Ingredients Lambda
+          cd ../../lambda/ingredients
+          npm ci
+          zip -r function.zip ./*
+          
+          # ShoppingLists Lambda
+          cd ../../lambda/shoppingLists
+          npm ci
+          zip -r function.zip ./*
+          
+          # Return to root and show files
+          cd ../../..
+      
+      - name: Create deployment template
+        run: |
+          # Create a copy of template.yaml with updated CodeUri paths
+          cp template.yaml template-deploy.yaml
+          
+          # Update CodeUri paths to point to zip files
+          
+          # Debug: show the modified template
+          grep -A 3 "CodeUri:" template-deploy.yaml
           
       - name: SAM Package
         run: aws cloudformation package --s3-bucket lunchplannerv2-lambdas --template-file template.yaml --output-template-file gen/template-generated.yaml
