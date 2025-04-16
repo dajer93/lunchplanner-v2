@@ -1,12 +1,11 @@
-name: Deploy SAM Application
+name: Deploy Lunchplanner
 
 on:
   push:
     branches:
       - release
-  pull_request:
-    branches:
-      - release
+    # This ensures the workflow only runs on pushes to release branch (which includes merged PRs)
+    # Remove the pull_request trigger to avoid running on PR creation
 
 jobs:
   deploy:
