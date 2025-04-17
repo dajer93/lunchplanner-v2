@@ -12,13 +12,12 @@ export interface Meal {
 }
 
 export interface ShoppingList {
-  shoppingListId?: string;  // For backward compatibility
-  listId: string;           // Actual API field
-  name?: string;            // Optional for backward compatibility
-  meals?: string[];         // Optional for backward compatibility
-  mealIds: string[];        // Actual API field
-  ingredients?: string[];   // Optional for backward compatibility
+  listId: string;
+  name: string;
+  mealIds: string[];
+  ingredientIds: string[];
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface User {
@@ -46,4 +45,4 @@ export interface MealsResponse {
 export interface ShoppingListsResponse {
   shoppingLists: ShoppingList[];
   count: number;
-} 
+}

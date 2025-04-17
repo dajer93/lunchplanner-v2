@@ -151,6 +151,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: LunchplannerV2-ShoppingLists
+        - DynamoDBReadPolicy:
+            TableName: LunchplannerV2-Meals
 
   LunchplannerV2GetShoppingLists:
     Type: AWS::Serverless::Function
@@ -164,6 +166,23 @@ Resources:
           Properties:
             Path: /shoppingLists
             Method: get
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-ShoppingLists
+
+  LunchplannerV2UpdateShoppingList:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/shoppingLists/function.zip
+      Handler: updateShoppingList.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /shoppingLists/{listId}
+            Method: put
             RestApiId: !Ref LunchplannerApi
       Policies:
         - DynamoDBCrudPolicy:

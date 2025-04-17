@@ -1,11 +1,18 @@
-import { useState } from 'react';
-import { Alert, Box, Button, Container, TextField, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const { login, error, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -13,35 +20,41 @@ const Login = () => {
     e.preventDefault();
     const success = await login(username, password);
     if (success) {
-      navigate('/meals');
+      navigate("/meals");
     }
   };
 
   return (
     <Container maxWidth="xs">
-      <Box sx={{ 
-        mt: 8, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center' 
-      }}>
+      <Box
+        sx={{
+          mt: 8,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>
-        
+
         {error && (
-          <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+          <Alert severity="error" sx={{ mt: 2, width: "100%" }}>
             {error}
           </Alert>
         )}
-        
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
+
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ mt: 1, width: "100%" }}
+        >
           <TextField
             margin="normal"
             required
             fullWidth
             id="username"
-            label="Username"
+            label="Email address"
             name="username"
             autoComplete="username"
             autoFocus
@@ -67,7 +80,7 @@ const Login = () => {
             sx={{ mt: 3, mb: 2 }}
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? "Signing in..." : "Sign In"}
           </Button>
         </Box>
       </Box>
@@ -75,4 +88,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;

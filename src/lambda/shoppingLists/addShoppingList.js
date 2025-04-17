@@ -1,5 +1,5 @@
-const { DynamoDBClient, PutItemCommand } = require('@aws-sdk/client-dynamodb');
-const { marshall } = require('@aws-sdk/util-dynamodb');
+const { DynamoDBClient, PutItemCommand, GetItemCommand, BatchGetItemCommand } = require('@aws-sdk/client-dynamodb');
+const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 const { v4: uuidv4 } = require('uuid');
 
 const dynamoDbClient = new DynamoDBClient({ region: 'eu-central-1' });
@@ -36,11 +36,77 @@ function extractUserId(event) {
 }
 
 /**
+ * Fetch meals from DynamoDB using meal IDs
+ * 
+ * @param {string[]} mealIds - Array of meal IDs to fetch
+ * @returns {Object[]} - Array of meal objects
+ */
+async function fetchMeals(mealIds) {
+    if (!mealIds || mealIds.length === 0) {
+        return [];
+    }
+
+    // Create a map of key objects for BatchGetItem
+    const keys = mealIds.map(mealId => ({ mealId }));
+    
+    const params = {
+        RequestItems: {
+            'LunchplannerV2-Meals': {
+                Keys: keys.map(key => marshall(key))
+            }
+        }
+    };
+
+    try {
+        const response = await dynamoDbClient.send(new BatchGetItemCommand(params));
+        
+        if (response.Responses && response.Responses['LunchplannerV2-Meals']) {
+            const meals = response.Responses['LunchplannerV2-Meals'].map(item => unmarshall(item));
+            return meals;
+        }
+        
+        return [];
+    } catch (error) {
+        console.error('Error fetching meals:', error);
+        return [];
+    }
+}
+
+/**
+ * Extract all unique ingredient IDs from a set of meals
+ * 
+ * @param {Object[]} meals - Array of meal objects
+ * @returns {string[]} - Array of unique ingredient IDs
+ */
+function extractIngredientIds(meals) {    
+    const ingredientIdsSet = new Set();
+    
+    meals.forEach(meal => {        
+        if (meal.ingredients && Array.isArray(meal.ingredients)) {
+            meal.ingredients.forEach(ingredientId => {
+                // If ingredientId is an object with an S property, use that value
+                if (typeof ingredientId === 'object' && ingredientId.S) {
+                    ingredientIdsSet.add(ingredientId.S);
+                } else {
+                    ingredientIdsSet.add(ingredientId);
+                }
+            });
+        } else {
+            console.log(`Meal ${meal.mealId} has no valid ingredients array`);
+        }
+    });
+    
+    const result = Array.from(ingredientIdsSet);
+    console.log('Extracted ingredient IDs:', JSON.stringify(result));
+    return result;
+}
+
+/**
  * Lambda function to add a shopping list to the DynamoDB LunchplannerV2-ShoppingLists table
  * 
  * @param {Object} event - Lambda event object
  * @param {string} event.name - Name of the shopping list
- * @param {Array} event.mealIds - Array of shopping list items
+ * @param {Array} event.mealIds - Array of meal IDs to include in the shopping list
  * @returns {Object} - Response containing the shopping list details
  */
 exports.handler = async (event) => {
@@ -81,6 +147,12 @@ exports.handler = async (event) => {
             };
         }
         
+        // Fetch the meals to extract ingredient IDs
+        const meals = await fetchMeals(mealIds);
+        
+        // Extract unique ingredient IDs from the meals
+        const ingredientIds = extractIngredientIds(meals);
+
         // Generate a unique ID for the shopping list
         const listId = uuidv4();
         
@@ -89,9 +161,12 @@ exports.handler = async (event) => {
             listId,
             userId, // Associate shopping list with the authenticated user
             name,
-            mealIds,
+            mealIds, // Keep the original meal IDs for reference
+            ingredientIds, // Store the extracted ingredient IDs
             createdAt: new Date().toISOString()
         };
+        
+        console.log('Creating shopping list:', JSON.stringify(shoppingList));
         
         // Prepare the DynamoDB put command
         const params = {

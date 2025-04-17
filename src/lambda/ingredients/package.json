@@ -1,6 +1,6 @@
 {
   "name": "lunchplanner-v2-ingredients-lambda",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Lambda functions for handling ingredients in the LunchPlanner V2 application",
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.470.0",

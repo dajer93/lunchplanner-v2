@@ -12,11 +12,11 @@ const path = require('path');
 
 // Package.json paths relative to project root
 const packagePaths = [
-  './package.json',
-  './src/client/package.json',
-  './src/lambda/meals/package.json',
-  './src/lambda/ingredients/package.json',
-  './src/lambda/shoppingLists/package.json'
+  '../package.json',
+  '../src/client/package.json',
+  '../src/lambda/meals/package.json',
+  '../src/lambda/ingredients/package.json',
+  '../src/lambda/shoppingLists/package.json'
 ];
 
 // Get version from command line arguments

@@ -40,7 +40,7 @@ function extractUserId(event) {
  * 
  * @param {Object} event - Lambda event object
  * @param {Object} event.pathParameters - Path parameters (if any)
- * @param {string} event.pathParameters.shoppingListId - Optional shopping list ID
+ * @param {string} event.pathParameters.listId - Optional shopping list ID
  * @returns {Object} - Response containing the shopping list(s)
  */
 exports.handler = async (event) => {
@@ -65,12 +65,12 @@ exports.handler = async (event) => {
             };
         }
         
-        // Check if a specific shoppingListId was provided
-        const shoppingListId = event.pathParameters?.shoppingListId;
+        // Check if a specific listId was provided
+        const listId = event.pathParameters?.listId;
         
-        if (shoppingListId) {
+        if (listId) {
             // Get a specific shopping list by ID
-            return await getShoppingListById(shoppingListId, userId);
+            return await getShoppingListById(listId, userId);
         } else {
             // Get all shopping lists
             return await getAllShoppingLists(userId);
@@ -92,14 +92,14 @@ exports.handler = async (event) => {
 /**
  * Retrieves a specific shopping list from DynamoDB by its ID
  * 
- * @param {string} shoppingListId - The ID of the shopping list to retrieve
+ * @param {string} listId - The ID of the shopping list to retrieve
  * @param {string} userId - The ID of the current user
  * @returns {Object} - Response containing the shopping list
  */
-async function getShoppingListById(shoppingListId, userId) {
+async function getShoppingListById(listId, userId) {
     const params = {
         TableName: 'LunchplannerV2-ShoppingLists',
-        Key: marshall({ shoppingListId })
+        Key: marshall({ listId })
     };
     
     const { Item } = await dynamoDbClient.send(new GetItemCommand(params));
