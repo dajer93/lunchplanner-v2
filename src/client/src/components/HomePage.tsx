@@ -38,7 +38,6 @@ const HomePage = () => {
             component={RouterLink}
             to="/meals"
             variant="contained"
-            color="primary"
             size="large"
             sx={{ mt: 2 }}
           >

@@ -24,11 +24,11 @@ async function testGetShoppingListById() {
   console.log('\nTesting getShoppingLists Lambda function (get shopping list by ID)...');
   
   // Replace with a valid shopping list ID from your DynamoDB table
-  const shoppingListId = 'REPLACE_WITH_VALID_SHOPPING_LIST_ID';
+  const listId = 'REPLACE_WITH_VALID_LIST_ID';
   
   const mockEvent = {
     pathParameters: {
-      shoppingListId: shoppingListId
+      listId: listId
     }
   };
   
@@ -53,5 +53,5 @@ runTests();
  * 1. AWS credentials configured locally with appropriate permissions
  * 2. A live connection to AWS services
  * 3. The DynamoDB table must exist and contain data
- * 4. Replace 'REPLACE_WITH_VALID_SHOPPING_LIST_ID' with an actual shoppingListId from your table
+ * 4. Replace 'REPLACE_WITH_VALID_LIST_ID' with an actual listId from your table
  */ 

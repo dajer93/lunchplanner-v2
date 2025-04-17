@@ -30,3 +30,10 @@ Please use the `src/client` folder to create the application.
 
 Ask my questions if more details are needed.
 ```
+
+```
+I'd like to create a new lambda function to be able to update the shoppinglists. 
+For this change, please refer to the already existing functions addShoppingList and getShoppingLists and their data structure.
+Please also make sure to update the template.yaml to have the new API endpoint and the Lambda connected to the endpoint.
+Please also make sure to update the client side of the app, the list items on the ShoppingListPage.tsx should each have a small button with a crossmark that allows the users to delete list items from the respective shoppinglist. In order to do so, you will also need to update the apiService with the new API call to the UPDATE endpoint.
+```
