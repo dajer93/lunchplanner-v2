@@ -1,6 +1,6 @@
 {
   "name": "lunchplanner-v2",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "scripts": {
     "start": "cd src/client && npm run dev",
