@@ -6,6 +6,11 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   Grid,
   IconButton,
@@ -15,6 +20,7 @@ import {
 } from "@mui/material";
 import {
   addIngredient,
+  deleteShoppingList,
   getIngredients,
   getMeals,
   getShoppingLists,
@@ -26,6 +32,7 @@ import RestaurantIcon from "@mui/icons-material/Restaurant";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const ShoppingListsPage = () => {
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
@@ -39,6 +46,8 @@ const ShoppingListsPage = () => {
   const [newIngredientInputs, setNewIngredientInputs] = useState<{
     [key: string]: string;
   }>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [listToDelete, setListToDelete] = useState<ShoppingList | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -152,6 +161,36 @@ const ShoppingListsPage = () => {
     } catch (err) {
       console.error("Error adding ingredient to shopping list:", err);
       setError("Failed to add ingredient. Please try again later.");
+    } finally {
+      setUpdatingListId(null);
+    }
+  };
+
+  // Function to open delete confirmation dialog
+  const openDeleteDialog = (shoppingList: ShoppingList) => {
+    setListToDelete(shoppingList);
+    setDeleteDialogOpen(true);
+  };
+
+  // Function to handle list deletion
+  const handleDeleteList = async () => {
+    if (!listToDelete) return;
+
+    try {
+      setUpdatingListId(listToDelete.listId);
+      await deleteShoppingList(listToDelete.listId);
+
+      // Update local state by removing the deleted list
+      setShoppingLists((prevLists) =>
+        prevLists.filter((list) => list.listId !== listToDelete.listId),
+      );
+
+      // Close the dialog
+      setDeleteDialogOpen(false);
+      setListToDelete(null);
+    } catch (err) {
+      console.error("Error deleting shopping list:", err);
+      setError("Failed to delete shopping list. Please try again later.");
     } finally {
       setUpdatingListId(null);
     }
@@ -302,6 +341,21 @@ const ShoppingListsPage = () => {
                     </Button>
                   </Box>
 
+                  {/* Delete button */}
+                  <Box
+                    sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}
+                  >
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      startIcon={<DeleteIcon />}
+                      onClick={() => openDeleteDialog(shoppingList)}
+                      disabled={isUpdating}
+                    >
+                      Delete List
+                    </Button>
+                  </Box>
+
                   {isUpdating && (
                     <Box
                       sx={{ display: "flex", justifyContent: "center", mt: 2 }}
@@ -315,6 +369,42 @@ const ShoppingListsPage = () => {
           );
         })}
       </Grid>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">Delete Shopping List</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete this shopping list? This action
+            cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={updatingListId === listToDelete?.listId}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteList}
+            color="error"
+            disabled={updatingListId === listToDelete?.listId}
+            autoFocus
+          >
+            {updatingListId === listToDelete?.listId ? (
+              <CircularProgress size={24} />
+            ) : (
+              "Delete"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
