@@ -24,6 +24,7 @@ npm start
 
 The app relies on a SAM (Serverless Architecture Model) backend. 
 
+```
 lunchplanner-v2/
 ├── src/
 │   ├── client/
@@ -41,3 +42,4 @@ lunchplanner-v2/
 │       ├── ingredients/
 │       ├── meals/
 │       └── shoppingLists/
+```
