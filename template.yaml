@@ -188,6 +188,23 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: LunchplannerV2-ShoppingLists
 
+  LunchplannerV2DeleteShoppingList:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/shoppingLists/function.zip
+      Handler: deleteShoppingList.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /shoppingLists/{listId}
+            Method: delete
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-ShoppingLists
+
 Outputs:
   ApiURL:
     Description: "API Gateway endpoint URL for dev stage"

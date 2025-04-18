@@ -13,9 +13,12 @@ Retrieves shopping lists from the DynamoDB table. Can retrieve all shopping list
 ### Update Shopping List (`updateShoppingList.js`)
 Updates an existing shopping list by removing and adding ingredients.
 
+### Delete Shopping List (`deleteShoppingList.js`)
+Deletes a shopping list from the DynamoDB table.
+
 ## Features
 
-- CORS Support: Both Lambda functions include CORS headers to allow requests from all origins
+- CORS Support: All Lambda functions include CORS headers to allow requests from all origins
 - Error handling with appropriate status codes
 - Input validation
 - Support for API Gateway integration
@@ -26,10 +29,12 @@ Updates an existing shopping list by removing and adding ingredients.
 - `addShoppingList.js` - Lambda function to add a shopping list
 - `getShoppingLists.js` - Lambda function to retrieve shopping lists
 - `updateShoppingList.js` - Lambda function to update a shopping list
+- `deleteShoppingList.js` - Lambda function to delete a shopping list
 - `package.json` - Dependencies and project metadata
 - `test-local-add.js` - Test script for the addShoppingList function
 - `test-local-get.js` - Test script for the getShoppingLists function
 - `test-local-update.js` - Test script for the updateShoppingList function
+- `test-local-delete.js` - Test script for the deleteShoppingList function
 
 ## Requirements
 
@@ -228,9 +233,52 @@ The client application has been updated to:
 - Enable removing existing ingredients
 - Update the UI to reflect changes in real-time
 
+### Delete Shopping List
+
+The `deleteShoppingList.js` Lambda function allows users to delete their shopping lists.
+
+#### API Endpoints
+
+```
+DELETE /shoppingLists/{listId}
+```
+
+#### Request
+
+The API requires the list ID as a path parameter. No request body is needed.
+
+#### Response
+
+Success response (200):
+```json
+{
+  "message": "Shopping list deleted successfully",
+  "listId": "list-id"
+}
+```
+
+Error responses:
+- 400: Shopping list ID is required
+- 401: User not authenticated
+- 403: User does not have permission to delete this shopping list
+- 404: Shopping list not found
+- 500: Server-side error
+
+#### Testing
+
+The function can be tested locally using the `test-local-delete.js` script.
+
+#### Client Integration
+
+The client application has been updated to:
+- Display a delete button on each shopping list card
+- Show a confirmation dialog before deleting
+- Provide feedback during the deletion process
+- Remove the deleted list from the UI after successful deletion
+
 ## CORS Support
 
-Both Lambda functions include CORS headers that allow cross-origin requests from any domain. The following headers are included in all responses:
+All Lambda functions include CORS headers that allow cross-origin requests from any domain. The following headers are included in all responses:
 
 ```
 Access-Control-Allow-Origin: *

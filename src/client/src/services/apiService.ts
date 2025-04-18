@@ -324,3 +324,22 @@ export const updateShoppingList = async (
     throw error;
   }
 };
+
+export const deleteShoppingList = async (
+  listId: string,
+): Promise<{ listId: string }> => {
+  try {
+    const response = await fetch(`${API_URL}/shoppingLists/${listId}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+
+    const data = await handleResponse(response);
+    console.log("API Response for deleteShoppingList:", data);
+
+    return { listId };
+  } catch (error) {
+    console.error("Error deleting shopping list:", error);
+    throw error;
+  }
+};
