@@ -196,11 +196,16 @@ PUT /shoppingLists/{listId}
 ```json
 {
   "removeIngredientIds": ["ingredient-id-1", "ingredient-id-2"],
-  "addIngredientIds": ["ingredient-id-3", "ingredient-id-4"]
+  "addIngredientIds": ["ingredient-id-3", "ingredient-id-4"],
+  "tickedIngredientIds": ["ingredient-id-3", "ingredient-id-5"]
 }
 ```
 
-Both `removeIngredientIds` and `addIngredientIds` are optional, but at least one must be provided.
+All parameters (`removeIngredientIds`, `addIngredientIds`, and `tickedIngredientIds`) are optional, but at least one must be provided.
+
+- `removeIngredientIds`: Array of ingredient IDs to remove from the shopping list
+- `addIngredientIds`: Array of ingredient IDs to add to the shopping list
+- `tickedIngredientIds`: Array of ingredient IDs that are marked as "ticked" (checked) in the UI
 
 #### Response
 
@@ -213,6 +218,7 @@ Both `removeIngredientIds` and `addIngredientIds` are optional, but at least one
     "userId": "user-id",
     "mealIds": ["meal-id-1", "meal-id-2"],
     "ingredientIds": ["ingredient-id-5", "ingredient-id-3", "ingredient-id-4"],
+    "tickedIngredients": ["ingredient-id-3", "ingredient-id-5"],
     "createdAt": "2023-01-01T00:00:00.000Z",
     "updatedAt": "2023-01-02T00:00:00.000Z"
   }
@@ -225,12 +231,16 @@ The function can be tested locally using the `test-local-update.js` script. This
 1. Removing ingredients from a shopping list
 2. Adding ingredients to a shopping list
 3. Both operations in a single request
+4. Updating the ticked ingredients list
 
 #### Client Integration
 
 The client application has been updated to:
-- Allow users to add new ingredients directly from the shopping list page
+- Display checkboxes next to each ingredient in a shopping list
+- Allow users to mark ingredients as "ticked" (completed) by clicking the checkbox
+- Apply visual styling (strikethrough) to ticked ingredients
 - Enable removing existing ingredients
+- Allow adding new ingredients directly from the shopping list page
 - Update the UI to reflect changes in real-time
 
 ### Delete Shopping List

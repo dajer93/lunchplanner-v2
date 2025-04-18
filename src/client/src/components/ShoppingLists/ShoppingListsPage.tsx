@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -192,6 +193,56 @@ const ShoppingListsPage = () => {
     }
   };
 
+  const isIngredientTicked = (
+    shoppingList: ShoppingList,
+    ingredientId: string,
+  ): boolean => {
+    return Boolean(shoppingList.tickedIngredients?.includes(ingredientId));
+  };
+
+  const handleIngredientToggle = async (
+    listId: string,
+    ingredientId: string,
+    checked: boolean,
+  ) => {
+    try {
+      setUpdatingListId(listId);
+
+      const currentList = shoppingLists.find((list) => list.listId === listId);
+      if (!currentList) return;
+
+      const currentTickedIngredients = currentList.tickedIngredients || [];
+
+      let newTickedIngredients: string[];
+      if (checked) {
+        newTickedIngredients = [
+          ...currentTickedIngredients,
+          ingredientId,
+        ].filter((id, index, self) => self.indexOf(id) === index);
+      } else {
+        newTickedIngredients = currentTickedIngredients.filter(
+          (id) => id !== ingredientId,
+        );
+      }
+
+      const updatedList = await updateShoppingList(
+        listId,
+        [], // No ingredients to remove
+        [], // No ingredients to add
+        newTickedIngredients,
+      );
+
+      setShoppingLists((prevLists) =>
+        prevLists.map((list) => (list.listId === listId ? updatedList : list)),
+      );
+    } catch (err) {
+      console.error("Error updating ticked ingredients:", err);
+      setError("Failed to update shopping list. Please try again later.");
+    } finally {
+      setUpdatingListId(null);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
@@ -283,9 +334,48 @@ const ShoppingListsPage = () => {
                           justifyContent="space-between"
                           sx={{ mb: 0.5 }}
                         >
-                          <Typography variant="body2">
-                            {ingredient.name}
-                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              flex: 1,
+                            }}
+                          >
+                            <Checkbox
+                              checked={isIngredientTicked(
+                                shoppingList,
+                                ingredient.id,
+                              )}
+                              onChange={(e) =>
+                                handleIngredientToggle(
+                                  listId,
+                                  ingredient.id,
+                                  e.target.checked,
+                                )
+                              }
+                              disabled={isUpdating}
+                              size="small"
+                            />
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                textDecoration: isIngredientTicked(
+                                  shoppingList,
+                                  ingredient.id,
+                                )
+                                  ? "line-through"
+                                  : "none",
+                                color: isIngredientTicked(
+                                  shoppingList,
+                                  ingredient.id,
+                                )
+                                  ? "text.secondary"
+                                  : "text.primary",
+                              }}
+                            >
+                              {ingredient.name}
+                            </Typography>
+                          </Box>
                           <IconButton
                             size="small"
                             color="error"
