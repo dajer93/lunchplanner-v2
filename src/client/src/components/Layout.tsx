@@ -19,6 +19,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import pkg from "../../package.json";
+import lunchplannerIcon from "../assets/lunchplanner-logo.png";
 
 interface LayoutProps {
   children: ReactNode;
@@ -87,6 +88,15 @@ const Layout: FC<LayoutProps> = ({ children }) => {
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <AppBar position="static" sx={{ width: "100%" }}>
         <Toolbar>
+          <img
+            src={lunchplannerIcon}
+            alt="Lunchplanner Logo"
+            style={{
+              height: "40px",
+              width: "auto",
+              marginRight: "12px",
+            }}
+          />
           <Typography
             variant="h6"
             component={RouterLink}
