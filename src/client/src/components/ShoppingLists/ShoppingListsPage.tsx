@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   CircularProgress,
@@ -9,9 +10,11 @@ import {
   Grid,
   IconButton,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import {
+  addIngredient,
   getIngredients,
   getMeals,
   getShoppingLists,
@@ -22,6 +25,7 @@ import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from "@mui/icons-material/Add";
 
 const ShoppingListsPage = () => {
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
@@ -32,6 +36,9 @@ const ShoppingListsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingListId, setUpdatingListId] = useState<string | null>(null);
+  const [newIngredientInputs, setNewIngredientInputs] = useState<{
+    [key: string]: string;
+  }>({});
 
   useEffect(() => {
     fetchData();
@@ -118,6 +125,57 @@ const ShoppingListsPage = () => {
     }
   };
 
+  // Function to handle input change for new ingredient
+  const handleIngredientInputChange = (listId: string, value: string) => {
+    setNewIngredientInputs((prev) => ({
+      ...prev,
+      [listId]: value,
+    }));
+  };
+
+  // Function to handle adding a new ingredient to a shopping list
+  const handleAddIngredient = async (listId: string) => {
+    const ingredientName = newIngredientInputs[listId]?.trim();
+    if (!listId || !ingredientName) return;
+
+    try {
+      setUpdatingListId(listId);
+
+      // First, add the new ingredient
+      const newIngredient = await addIngredient(ingredientName);
+
+      // Then, add it to the shopping list
+      const updatedList = await updateShoppingList(
+        listId,
+        [], // No ingredients to remove
+        [newIngredient.ingredientId], // Add the new ingredient ID
+      );
+
+      // Update local state
+      setShoppingLists((prevLists) =>
+        prevLists.map((list) => (list.listId === listId ? updatedList : list)),
+      );
+
+      // Update the ingredients map with the new ingredient
+      setIngredients((prevMap) => {
+        const newMap = new Map(prevMap);
+        newMap.set(newIngredient.ingredientId, newIngredient);
+        return newMap;
+      });
+
+      // Clear the input field
+      setNewIngredientInputs((prev) => ({
+        ...prev,
+        [listId]: "",
+      }));
+    } catch (err) {
+      console.error("Error adding ingredient to shopping list:", err);
+      setError("Failed to add ingredient. Please try again later.");
+    } finally {
+      setUpdatingListId(null);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
@@ -161,6 +219,7 @@ const ShoppingListsPage = () => {
           const listId = shoppingList.listId;
           const ingredientItems = getIngredientItems(shoppingList);
           const isUpdating = updatingListId === listId;
+          const newIngredientValue = newIngredientInputs[listId] || "";
 
           return (
             <Grid key={listId} sx={{ width: { xs: "100%", md: "50%" } }}>
@@ -229,6 +288,39 @@ const ShoppingListsPage = () => {
                       No ingredients in this shopping list
                     </Typography>
                   )}
+
+                  {/* Add new ingredient input field */}
+                  <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
+                    <TextField
+                      placeholder="Add new ingredient"
+                      fullWidth
+                      value={newIngredientValue}
+                      onChange={(e) =>
+                        handleIngredientInputChange(listId, e.target.value)
+                      }
+                      disabled={isUpdating}
+                      sx={{
+                        mr: 1,
+                        "& .MuiInputBase-root": {
+                          height: 36.5,
+                        },
+                        "& .MuiOutlinedInput-input": {
+                          padding: "8px 14px",
+                        },
+                      }}
+                      size="small"
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<AddIcon />}
+                      onClick={() => handleAddIngredient(listId)}
+                      disabled={isUpdating || !newIngredientValue.trim()}
+                      sx={{ height: 36.5 }}
+                    >
+                      Add
+                    </Button>
+                  </Box>
 
                   {isUpdating && (
                     <Box

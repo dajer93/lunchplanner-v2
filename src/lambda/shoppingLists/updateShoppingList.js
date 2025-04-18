@@ -7,7 +7,7 @@ const dynamoDbClient = new DynamoDBClient({ region: 'eu-central-1' });
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
-    'Access-Control-Allow-Methods': 'OPTIONS,PUT,DELETE',
+    'Access-Control-Allow-Methods': 'OPTIONS,PUT,POST,DELETE',
     'Access-Control-Allow-Credentials': true
 };
 
@@ -36,7 +36,7 @@ function extractUserId(event) {
 
 /**
  * Lambda function to update a shopping list in the DynamoDB LunchplannerV2-ShoppingLists table
- * Can update the list of ingredients by removing specific ingredient IDs
+ * Can update the list of ingredients by removing specific ingredient IDs or adding new ingredient IDs
  * 
  * @param {Object} event - Lambda event object
  * @returns {Object} - Response containing the updated shopping list details
@@ -79,14 +79,18 @@ exports.handler = async (event) => {
             ? JSON.parse(event.body) 
             : event.body || event;
         
-        // Get the list of ingredient IDs to remove
-        const { removeIngredientIds } = requestBody;
+        // Get the list of ingredient IDs to remove and add
+        const { removeIngredientIds = [], addIngredientIds = [] } = requestBody;
         
-        if (!removeIngredientIds || !Array.isArray(removeIngredientIds) || removeIngredientIds.length === 0) {
+        // Validate that at least one operation is requested
+        if (
+            (removeIngredientIds.length === 0 || !Array.isArray(removeIngredientIds)) &&
+            (addIngredientIds.length === 0 || !Array.isArray(addIngredientIds))
+        ) {
             return {
                 statusCode: 400,
                 headers: corsHeaders,
-                body: JSON.stringify({ message: 'removeIngredientIds array is required' })
+                body: JSON.stringify({ message: 'Either removeIngredientIds or addIngredientIds array is required' })
             };
         }
         
@@ -117,9 +121,21 @@ exports.handler = async (event) => {
             };
         }
         
-        // Filter out the ingredient IDs to remove
+        // Get current ingredient IDs
         const currentIngredientIds = shoppingList.ingredientIds || [];
-        const updatedIngredientIds = currentIngredientIds.filter(id => !removeIngredientIds.includes(id));
+        
+        // Filter out the ingredient IDs to remove
+        let updatedIngredientIds = currentIngredientIds;
+        if (removeIngredientIds.length > 0) {
+            updatedIngredientIds = updatedIngredientIds.filter(id => !removeIngredientIds.includes(id));
+        }
+        
+        // Add new ingredients (avoiding duplicates)
+        if (addIngredientIds.length > 0) {
+            // Only add ingredients that don't already exist in the list
+            const newIngredients = addIngredientIds.filter(id => !updatedIngredientIds.includes(id));
+            updatedIngredientIds = [...updatedIngredientIds, ...newIngredients];
+        }
         
         // Update the shopping list in DynamoDB
         const updateParams = {
