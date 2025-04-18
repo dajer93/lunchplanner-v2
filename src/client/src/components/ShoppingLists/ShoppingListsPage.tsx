@@ -166,13 +166,11 @@ const ShoppingListsPage = () => {
     }
   };
 
-  // Function to open delete confirmation dialog
   const openDeleteDialog = (shoppingList: ShoppingList) => {
     setListToDelete(shoppingList);
     setDeleteDialogOpen(true);
   };
 
-  // Function to handle list deletion
   const handleDeleteList = async () => {
     if (!listToDelete) return;
 
@@ -180,12 +178,10 @@ const ShoppingListsPage = () => {
       setUpdatingListId(listToDelete.listId);
       await deleteShoppingList(listToDelete.listId);
 
-      // Update local state by removing the deleted list
       setShoppingLists((prevLists) =>
         prevLists.filter((list) => list.listId !== listToDelete.listId),
       );
 
-      // Close the dialog
       setDeleteDialogOpen(false);
       setListToDelete(null);
     } catch (err) {
@@ -341,7 +337,6 @@ const ShoppingListsPage = () => {
                     </Button>
                   </Box>
 
-                  {/* Delete button */}
                   <Box
                     sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}
                   >
@@ -370,7 +365,6 @@ const ShoppingListsPage = () => {
         })}
       </Grid>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}

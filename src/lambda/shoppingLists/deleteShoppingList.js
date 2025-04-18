@@ -51,7 +51,6 @@ exports.handler = async (event) => {
     }
     
     try {
-        // Extract user ID from Cognito context
         const userId = extractUserId(event);
         
         if (!userId) {
@@ -62,7 +61,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // Check if a specific listId was provided in the path parameters
         const listId = event.pathParameters?.listId;
         
         if (!listId) {
@@ -73,7 +71,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // First, get the existing shopping list to verify it exists and belongs to the user
         const getParams = {
             TableName: 'LunchplannerV2-ShoppingLists',
             Key: marshall({ listId })
@@ -91,7 +88,6 @@ exports.handler = async (event) => {
         
         const shoppingList = unmarshall(Item);
         
-        // Check if this shopping list belongs to the current user
         if (shoppingList.userId !== userId) {
             return {
                 statusCode: 403,
@@ -100,7 +96,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // Delete the shopping list from DynamoDB
         const deleteParams = {
             TableName: 'LunchplannerV2-ShoppingLists',
             Key: marshall({ listId }),
