@@ -76,16 +76,22 @@ exports.handler = async (event) => {
             ? JSON.parse(event.body) 
             : event.body || event;
         
-        const { removeIngredientIds = [], addIngredientIds = [] } = requestBody;
+        const { 
+            removeIngredientIds = [], 
+            addIngredientIds = [],
+            tickedIngredientIds
+        } = requestBody;
         
+        // Validate that at least one operation is requested
         if (
             (removeIngredientIds.length === 0 || !Array.isArray(removeIngredientIds)) &&
-            (addIngredientIds.length === 0 || !Array.isArray(addIngredientIds))
+            (addIngredientIds.length === 0 || !Array.isArray(addIngredientIds)) &&
+            tickedIngredientIds === undefined
         ) {
             return {
                 statusCode: 400,
                 headers: corsHeaders,
-                body: JSON.stringify({ message: 'Either removeIngredientIds or addIngredientIds array is required' })
+                body: JSON.stringify({ message: 'At least one of removeIngredientIds, addIngredientIds, or tickedIngredientIds is required' })
             };
         }
         
@@ -126,14 +132,29 @@ exports.handler = async (event) => {
             updatedIngredientIds = [...updatedIngredientIds, ...newIngredients];
         }
         
+        let updateExpression = 'SET updatedAt = :updatedAt';
+        let expressionAttributeValues = {
+            ':updatedAt': new Date().toISOString()
+        };
+
+        // If we're updating ingredients
+        if (removeIngredientIds.length > 0 || addIngredientIds.length > 0) {
+            updateExpression += ', ingredientIds = :ingredientIds';
+            expressionAttributeValues[':ingredientIds'] = updatedIngredientIds;
+        }
+
+        // If we're updating ticked ingredients
+        if (tickedIngredientIds !== undefined) {
+            const tickedIngredients = Array.isArray(tickedIngredientIds) ? tickedIngredientIds : [];
+            updateExpression += ', tickedIngredients = :tickedIngredients';
+            expressionAttributeValues[':tickedIngredients'] = tickedIngredients;
+        }
+        
         const updateParams = {
             TableName: 'LunchplannerV2-ShoppingLists',
             Key: marshall({ listId }),
-            UpdateExpression: 'SET ingredientIds = :ingredientIds, updatedAt = :updatedAt',
-            ExpressionAttributeValues: marshall({
-                ':ingredientIds': updatedIngredientIds,
-                ':updatedAt': new Date().toISOString()
-            }),
+            UpdateExpression: updateExpression,
+            ExpressionAttributeValues: marshall(expressionAttributeValues),
             ReturnValues: 'ALL_NEW'
         };
         

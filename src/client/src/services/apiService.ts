@@ -294,6 +294,7 @@ export const updateShoppingList = async (
   listId: string,
   removeIngredientIds: string[] = [],
   addIngredientIds: string[] = [],
+  tickedIngredientIds?: string[],
 ): Promise<ShoppingList> => {
   try {
     const response = await fetch(`${API_URL}/shoppingLists/${listId}`, {
@@ -302,6 +303,7 @@ export const updateShoppingList = async (
       body: JSON.stringify({
         removeIngredientIds,
         addIngredientIds,
+        ...(tickedIngredientIds !== undefined && { tickedIngredientIds }),
       }),
     });
 

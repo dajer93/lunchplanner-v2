@@ -37,15 +37,34 @@ const addIngredientsEvent = {
   }
 };
 
-// Sample event for testing both adding and removing ingredients
-const bothOperationsEvent = {
+// Sample event for testing ticking ingredients
+const tickIngredientsEvent = {
+  httpMethod: 'PUT',
+  pathParameters: {
+    listId: 'YOUR_LIST_ID_HERE' // Replace with an actual listId from your database
+  },
+  body: JSON.stringify({
+    tickedIngredientIds: ['INGREDIENT_ID_TO_TICK'] // Replace with an actual ingredient ID
+  }),
+  requestContext: {
+    authorizer: {
+      claims: {
+        sub: 'YOUR_USER_ID_HERE' // Replace with your test user ID
+      }
+    }
+  }
+};
+
+// Sample event for testing both adding, removing, and ticking ingredients
+const multipleOperationsEvent = {
   httpMethod: 'PUT',
   pathParameters: {
     listId: 'YOUR_LIST_ID_HERE' // Replace with an actual listId from your database
   },
   body: JSON.stringify({
     removeIngredientIds: ['INGREDIENT_ID_TO_REMOVE'], // Replace with an actual ingredient ID
-    addIngredientIds: ['INGREDIENT_ID_TO_ADD'] // Replace with an actual ingredient ID
+    addIngredientIds: ['INGREDIENT_ID_TO_ADD'], // Replace with an actual ingredient ID
+    tickedIngredientIds: ['INGREDIENT_ID_TO_TICK'] // Replace with an actual ingredient ID
   }),
   requestContext: {
     authorizer: {
@@ -86,17 +105,30 @@ const test = async () => {
     console.error('Error in add test:', error);
   }
   
-  // Test case 3: Both operations
+  // Test case 3: Ticking ingredients
   try {
-    console.log('\n--- Testing both adding and removing ingredients ---');
-    const bothResponse = await handler(bothOperationsEvent);
-    console.log('Response:', JSON.stringify(bothResponse, null, 2));
+    console.log('\n--- Testing ticking ingredients ---');
+    const tickResponse = await handler(tickIngredientsEvent);
+    console.log('Response:', JSON.stringify(tickResponse, null, 2));
     
     // Parse the response body
-    const bothBody = JSON.parse(bothResponse.body);
-    console.log('Updated shopping list after both operations:', bothBody.shoppingList);
+    const tickBody = JSON.parse(tickResponse.body);
+    console.log('Updated shopping list after ticking:', tickBody.shoppingList);
   } catch (error) {
-    console.error('Error in both operations test:', error);
+    console.error('Error in tick test:', error);
+  }
+  
+  // Test case 4: Multiple operations
+  try {
+    console.log('\n--- Testing multiple operations (adding, removing, and ticking) ---');
+    const multiResponse = await handler(multipleOperationsEvent);
+    console.log('Response:', JSON.stringify(multiResponse, null, 2));
+    
+    // Parse the response body
+    const multiBody = JSON.parse(multiResponse.body);
+    console.log('Updated shopping list after multiple operations:', multiBody.shoppingList);
+  } catch (error) {
+    console.error('Error in multiple operations test:', error);
   }
 };
 

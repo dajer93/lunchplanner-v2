@@ -16,6 +16,7 @@ export interface ShoppingList {
   name: string;
   mealIds: string[];
   ingredientIds: string[];
+  tickedIngredients?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
