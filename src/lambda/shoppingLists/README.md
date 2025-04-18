@@ -52,61 +52,22 @@ Updates an existing shopping list by removing and adding ingredients.
    zip -r function.zip . -x "*.git*" "node_modules/.bin/*"
    ```
 
-### Deploying Add Shopping List Function
+### Deploying with CloudFormation
 
-3. Create the Lambda function (first-time only):
+3. Package your CloudFormation template:
    ```
-   aws lambda create-function \
-     --function-name LunchplannerV2-AddShoppingList \
-     --runtime nodejs18.x \
-     --handler addShoppingList.handler \
-     --role arn:aws:iam::<ACCOUNT_ID>:role/LunchplannerV2LambdaRole \
-     --zip-file fileb://function.zip
+   aws cloudformation package \
+     --template-file template.yaml \
+     --s3-bucket your-deployment-bucket \
+     --output-template-file packaged-template.yaml
    ```
 
-4. Update the Lambda function (for updates):
+4. Deploy your CloudFormation stack:
    ```
-   aws lambda update-function-code \
-     --function-name LunchplannerV2-AddShoppingList \
-     --zip-file fileb://function.zip
-   ```
-
-### Deploying Get Shopping Lists Function
-
-3. Create the Lambda function (first-time only):
-   ```
-   aws lambda create-function \
-     --function-name LunchplannerV2-GetShoppingLists \
-     --runtime nodejs18.x \
-     --handler getShoppingLists.handler \
-     --role arn:aws:iam::<ACCOUNT_ID>:role/LunchplannerV2LambdaRole \
-     --zip-file fileb://function.zip
-   ```
-
-4. Update the Lambda function (for updates):
-   ```
-   aws lambda update-function-code \
-     --function-name LunchplannerV2-GetShoppingLists \
-     --zip-file fileb://function.zip
-   ```
-
-### Deploying Update Shopping List Function
-
-3. Create the Lambda function (first-time only):
-   ```
-   aws lambda create-function \
-     --function-name LunchplannerV2-UpdateShoppingList \
-     --runtime nodejs18.x \
-     --handler updateShoppingList.handler \
-     --role arn:aws:iam::<ACCOUNT_ID>:role/LunchplannerV2LambdaRole \
-     --zip-file fileb://function.zip
-   ```
-
-4. Update the Lambda function (for updates):
-   ```
-   aws lambda update-function-code \
-     --function-name LunchplannerV2-UpdateShoppingList \
-     --zip-file fileb://function.zip
+   aws cloudformation deploy \
+     --template-file packaged-template.yaml \
+     --stack-name lunchplanner-v2-shopping-lists \
+     --capabilities CAPABILITY_IAM
    ```
 
 ## Usage

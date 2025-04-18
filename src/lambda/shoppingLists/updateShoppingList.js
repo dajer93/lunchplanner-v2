@@ -52,7 +52,6 @@ exports.handler = async (event) => {
     }
     
     try {
-        // Extract user ID from Cognito context
         const userId = extractUserId(event);
         
         if (!userId) {
@@ -63,7 +62,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // Check if a specific listId was provided in the path parameters
         const listId = event.pathParameters?.listId;
         
         if (!listId) {
@@ -74,15 +72,12 @@ exports.handler = async (event) => {
             };
         }
         
-        // Parse request body if it's a string
         const requestBody = typeof event.body === 'string' 
             ? JSON.parse(event.body) 
             : event.body || event;
         
-        // Get the list of ingredient IDs to remove and add
         const { removeIngredientIds = [], addIngredientIds = [] } = requestBody;
         
-        // Validate that at least one operation is requested
         if (
             (removeIngredientIds.length === 0 || !Array.isArray(removeIngredientIds)) &&
             (addIngredientIds.length === 0 || !Array.isArray(addIngredientIds))
@@ -94,7 +89,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // First, get the existing shopping list to verify it exists and belongs to the user
         const getParams = {
             TableName: 'LunchplannerV2-ShoppingLists',
             Key: marshall({ listId })
@@ -112,7 +106,6 @@ exports.handler = async (event) => {
         
         const shoppingList = unmarshall(Item);
         
-        // Check if this shopping list belongs to the current user
         if (shoppingList.userId !== userId) {
             return {
                 statusCode: 403,
@@ -121,23 +114,18 @@ exports.handler = async (event) => {
             };
         }
         
-        // Get current ingredient IDs
         const currentIngredientIds = shoppingList.ingredientIds || [];
         
-        // Filter out the ingredient IDs to remove
         let updatedIngredientIds = currentIngredientIds;
         if (removeIngredientIds.length > 0) {
             updatedIngredientIds = updatedIngredientIds.filter(id => !removeIngredientIds.includes(id));
         }
         
-        // Add new ingredients (avoiding duplicates)
         if (addIngredientIds.length > 0) {
-            // Only add ingredients that don't already exist in the list
             const newIngredients = addIngredientIds.filter(id => !updatedIngredientIds.includes(id));
             updatedIngredientIds = [...updatedIngredientIds, ...newIngredients];
         }
         
-        // Update the shopping list in DynamoDB
         const updateParams = {
             TableName: 'LunchplannerV2-ShoppingLists',
             Key: marshall({ listId }),

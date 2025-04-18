@@ -49,12 +49,10 @@ const ShoppingListsPage = () => {
     setError(null);
 
     try {
-      // Fetch all data in parallel
       const [shoppingListsData, mealsData, ingredientsData] = await Promise.all(
         [getShoppingLists(), getMeals(), getIngredients()],
       );
 
-      // Convert meals and ingredients to maps for easy lookup
       const mealsMap = new Map<string, Meal>();
       mealsData.forEach((meal) => mealsMap.set(meal.mealId, meal));
 
@@ -62,10 +60,6 @@ const ShoppingListsPage = () => {
       ingredientsData.forEach((ingredient) =>
         ingredientsMap.set(ingredient.ingredientId, ingredient),
       );
-
-      console.log("Fetched shopping lists:", shoppingListsData);
-      console.log("Fetched meals:", mealsData);
-      console.log("Fetched ingredients:", ingredientsData);
 
       setShoppingLists(shoppingListsData);
       setMeals(mealsMap);
@@ -78,7 +72,6 @@ const ShoppingListsPage = () => {
     }
   };
 
-  // Function to get meal names from meal IDs
   const getMealNames = (shoppingList: ShoppingList) => {
     if (!Array.isArray(shoppingList.mealIds)) {
       console.error("Invalid mealIds:", shoppingList.mealIds);
@@ -90,7 +83,6 @@ const ShoppingListsPage = () => {
       .join(", ");
   };
 
-  // Function to get ingredient names and IDs
   const getIngredientItems = (shoppingList: ShoppingList) => {
     if (!Array.isArray(shoppingList.ingredientIds)) {
       return [];
@@ -102,7 +94,6 @@ const ShoppingListsPage = () => {
     }));
   };
 
-  // Function to handle ingredient removal from a shopping list
   const handleRemoveIngredient = async (
     listId: string,
     ingredientId: string,
@@ -110,10 +101,8 @@ const ShoppingListsPage = () => {
     try {
       setUpdatingListId(listId);
 
-      // Call the API to update the shopping list by removing the ingredient
       const updatedList = await updateShoppingList(listId, [ingredientId]);
 
-      // Update the local state to reflect the change
       setShoppingLists((prevLists) =>
         prevLists.map((list) => (list.listId === listId ? updatedList : list)),
       );
@@ -125,7 +114,6 @@ const ShoppingListsPage = () => {
     }
   };
 
-  // Function to handle input change for new ingredient
   const handleIngredientInputChange = (listId: string, value: string) => {
     setNewIngredientInputs((prev) => ({
       ...prev,
@@ -133,7 +121,6 @@ const ShoppingListsPage = () => {
     }));
   };
 
-  // Function to handle adding a new ingredient to a shopping list
   const handleAddIngredient = async (listId: string) => {
     const ingredientName = newIngredientInputs[listId]?.trim();
     if (!listId || !ingredientName) return;
@@ -141,29 +128,23 @@ const ShoppingListsPage = () => {
     try {
       setUpdatingListId(listId);
 
-      // First, add the new ingredient
       const newIngredient = await addIngredient(ingredientName);
-
-      // Then, add it to the shopping list
       const updatedList = await updateShoppingList(
         listId,
-        [], // No ingredients to remove
-        [newIngredient.ingredientId], // Add the new ingredient ID
+        [],
+        [newIngredient.ingredientId],
       );
 
-      // Update local state
       setShoppingLists((prevLists) =>
         prevLists.map((list) => (list.listId === listId ? updatedList : list)),
       );
 
-      // Update the ingredients map with the new ingredient
       setIngredients((prevMap) => {
         const newMap = new Map(prevMap);
         newMap.set(newIngredient.ingredientId, newIngredient);
         return newMap;
       });
 
-      // Clear the input field
       setNewIngredientInputs((prev) => ({
         ...prev,
         [listId]: "",
@@ -289,7 +270,6 @@ const ShoppingListsPage = () => {
                     </Typography>
                   )}
 
-                  {/* Add new ingredient input field */}
                   <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
                     <TextField
                       placeholder="Add new ingredient"
