@@ -99,6 +99,23 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: LunchplannerV2-Meals
 
+  LunchplannerV2UpdateMeal:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/meals/function.zip
+      Handler: updateMeal.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /meals/{mealId}
+            Method: put
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-Meals
+
   # Ingredients Functions
   LunchplannerV2AddIngredient:
     Type: AWS::Serverless::Function

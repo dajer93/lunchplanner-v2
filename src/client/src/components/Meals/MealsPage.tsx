@@ -6,6 +6,7 @@ import {
   Checkbox,
   CircularProgress,
   Divider,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -16,10 +17,12 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { addShoppingList, getMeals } from "../../services/apiService";
 import { Meal } from "../../types";
 import NewMealDialog from "./NewMealDialog";
+import EditMealDialog from "./EditMealDialog";
 import { useNavigate } from "react-router-dom";
 
 const MealsPage = () => {
@@ -28,6 +31,8 @@ const MealsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedMeals, setSelectedMeals] = useState<Set<string>>(new Set());
   const [openNewMealDialog, setOpenNewMealDialog] = useState(false);
+  const [openEditMealDialog, setOpenEditMealDialog] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [creatingShoppingList, setCreatingShoppingList] = useState(false);
   const [shoppingListSuccess, setShoppingListSuccess] = useState(false);
   const navigate = useNavigate();
@@ -70,6 +75,19 @@ const MealsPage = () => {
   const handleCloseNewMealDialog = (mealAdded: boolean) => {
     setOpenNewMealDialog(false);
     if (mealAdded) {
+      fetchMeals();
+    }
+  };
+
+  const handleEditMeal = (meal: Meal) => {
+    setSelectedMeal(meal);
+    setOpenEditMealDialog(true);
+  };
+
+  const handleCloseEditMealDialog = (mealUpdated: boolean) => {
+    setOpenEditMealDialog(false);
+    setSelectedMeal(null);
+    if (mealUpdated) {
       fetchMeals();
     }
   };
@@ -153,9 +171,10 @@ const MealsPage = () => {
             <Table aria-label="meals table">
               <TableHead>
                 <TableRow>
-                  <TableCell padding="checkbox">Select</TableCell>
+                  <TableCell padding="checkbox"></TableCell>
                   <TableCell>Meal Name</TableCell>
                   <TableCell>Number of Ingredients</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -169,6 +188,15 @@ const MealsPage = () => {
                     </TableCell>
                     <TableCell>{meal.mealName}</TableCell>
                     <TableCell>{meal.ingredients.length}</TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        aria-label="edit"
+                        onClick={() => handleEditMeal(meal)}
+                        size="small"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -203,6 +231,12 @@ const MealsPage = () => {
       <NewMealDialog
         open={openNewMealDialog}
         onClose={handleCloseNewMealDialog}
+      />
+
+      <EditMealDialog
+        open={openEditMealDialog}
+        meal={selectedMeal}
+        onClose={handleCloseEditMealDialog}
       />
     </Box>
   );

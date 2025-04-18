@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState } from "react";
 import {
   Alert,
   Box,
@@ -14,12 +14,12 @@ import {
   ListItem,
   ListItemText,
   TextField,
-  Typography
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import { addIngredient, addMeal } from '../../services/apiService';
-import { Ingredient } from '../../types';
+  Typography,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import { addIngredient, addMeal } from "../../services/apiService";
+import { Ingredient } from "../../types";
 
 interface NewMealDialogProps {
   open: boolean;
@@ -27,16 +27,16 @@ interface NewMealDialogProps {
 }
 
 const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
-  const [mealName, setMealName] = useState('');
-  const [currentIngredient, setCurrentIngredient] = useState('');
+  const [mealName, setMealName] = useState("");
+  const [currentIngredient, setCurrentIngredient] = useState("");
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(false);
   const [addingIngredient, setAddingIngredient] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const resetForm = () => {
-    setMealName('');
-    setCurrentIngredient('');
+    setMealName("");
+    setCurrentIngredient("");
     setIngredients([]);
     setError(null);
   };
@@ -46,35 +46,43 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
     if (e) {
       e.preventDefault();
     }
-    
+
     if (!currentIngredient.trim()) {
       return;
     }
-    
+
     setAddingIngredient(true);
     setError(null);
-    
+
     try {
       const newIngredient = await addIngredient(currentIngredient.trim());
-      console.log('New ingredient received:', newIngredient);
-      
+      console.log("New ingredient received:", newIngredient);
+
       // Validate the ingredient before adding it to the state
-      if (!newIngredient || typeof newIngredient !== 'object' || !newIngredient.ingredientId) {
-        throw new Error('Invalid ingredient data received from server');
+      if (
+        !newIngredient ||
+        typeof newIngredient !== "object" ||
+        !newIngredient.ingredientId
+      ) {
+        throw new Error("Invalid ingredient data received from server");
       }
-      
+
       setIngredients([...ingredients, newIngredient]);
-      setCurrentIngredient('');
+      setCurrentIngredient("");
     } catch (err) {
-      console.error('Error adding ingredient:', err);
-      setError('Failed to add ingredient. Please try again.');
+      console.error("Error adding ingredient:", err);
+      setError("Failed to add ingredient. Please try again.");
     } finally {
       setAddingIngredient(false);
     }
   };
 
   const handleRemoveIngredient = (ingredientId: string) => {
-    setIngredients(ingredients.filter(ingredient => ingredient.ingredientId !== ingredientId));
+    setIngredients(
+      ingredients.filter(
+        (ingredient) => ingredient.ingredientId !== ingredientId,
+      ),
+    );
   };
 
   const handleSaveMeal = async (e?: FormEvent) => {
@@ -82,29 +90,31 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
     if (e) {
       e.preventDefault();
     }
-    
+
     if (!mealName.trim()) {
-      setError('Please enter a meal name');
+      setError("Please enter a meal name");
       return;
     }
-    
+
     if (ingredients.length === 0) {
-      setError('Please add at least one ingredient');
+      setError("Please add at least one ingredient");
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      const ingredientIds = ingredients.map(ingredient => ingredient.ingredientId);
+      const ingredientIds = ingredients.map(
+        (ingredient) => ingredient.ingredientId,
+      );
       await addMeal(mealName.trim(), ingredientIds);
-      
+
       resetForm();
       onClose(true);
     } catch (err) {
-      console.error('Error saving meal:', err);
-      setError('Failed to save meal. Please try again.');
+      console.error("Error saving meal:", err);
+      setError("Failed to save meal. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -124,7 +134,7 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
             {error}
           </Alert>
         )}
-        
+
         <TextField
           autoFocus
           margin="dense"
@@ -134,18 +144,61 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
           onChange={(e) => setMealName(e.target.value)}
           disabled={loading}
         />
-        
+
         <Divider sx={{ my: 2 }} />
-        
+
         <Typography variant="subtitle1" gutterBottom>
           Ingredients
         </Typography>
-        
+
+        {ingredients.length > 0 ? (
+          <List>
+            {ingredients.map((ingredient) => {
+              // Safety check to prevent rendering errors
+              if (!ingredient || typeof ingredient !== "object") {
+                return null;
+              }
+
+              return (
+                <ListItem
+                  key={ingredient.ingredientId || "unknown"}
+                  secondaryAction={
+                    <IconButton
+                      edge="end"
+                      aria-label="delete"
+                      onClick={() =>
+                        handleRemoveIngredient(ingredient.ingredientId)
+                      }
+                      disabled={loading}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemText
+                    primary={ingredient.ingredientName || "Unnamed Ingredient"}
+                  />
+                </ListItem>
+              );
+            })}
+          </List>
+        ) : (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            align="center"
+            sx={{ my: 2 }}
+          >
+            No ingredients added yet
+          </Typography>
+        )}
+
         <form onSubmit={handleAddIngredient}>
-          <Box sx={{ display: 'flex', mb: 2 }}>
+          <Box sx={{ display: "flex", mb: 2 }}>
             <TextField
               label="Add Ingredient"
               fullWidth
+              size="small"
               value={currentIngredient}
               onChange={(e) => setCurrentIngredient(e.target.value)}
               disabled={loading || addingIngredient}
@@ -154,48 +207,18 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
               type="submit"
               variant="contained"
               color="primary"
+              size="small"
               startIcon={<AddIcon />}
-              disabled={!currentIngredient.trim() || loading || addingIngredient}
+              disabled={
+                !currentIngredient.trim() || loading || addingIngredient
+              }
               sx={{ ml: 1 }}
             >
-              {addingIngredient ? <CircularProgress size={24} /> : 'Add'}
+              {addingIngredient ? <CircularProgress size={24} /> : "Add"}
             </Button>
           </Box>
         </form>
-        
-        {ingredients.length > 0 ? (
-          <List>
-            {ingredients.map((ingredient) => {
-              // Safety check to prevent rendering errors
-              if (!ingredient || typeof ingredient !== 'object') {
-                return null;
-              }
-              
-              return (
-                <ListItem
-                  key={ingredient.ingredientId || 'unknown'}
-                  secondaryAction={
-                    <IconButton 
-                      edge="end" 
-                      aria-label="delete" 
-                      onClick={() => handleRemoveIngredient(ingredient.ingredientId)}
-                      disabled={loading}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  }
-                >
-                  <ListItemText primary={ingredient.ingredientName || 'Unnamed Ingredient'} />
-                </ListItem>
-              );
-            })}
-          </List>
-        ) : (
-          <Typography variant="body2" color="text.secondary" align="center" sx={{ my: 2 }}>
-            No ingredients added yet
-          </Typography>
-        )}
-        
+
         <Box sx={{ mt: 2 }}>
           <Typography variant="caption" color="text.secondary">
             Total Ingredients: {ingredients.length}
@@ -206,13 +229,13 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
         <Button onClick={handleClose} disabled={loading}>
           Cancel
         </Button>
-        <form onSubmit={handleSaveMeal} style={{ display: 'inline' }}>
+        <form onSubmit={handleSaveMeal} style={{ display: "inline" }}>
           <Button
             type="submit"
             variant="contained"
             disabled={loading || ingredients.length === 0 || !mealName.trim()}
           >
-            {loading ? <CircularProgress size={24} /> : 'Save Meal'}
+            {loading ? <CircularProgress size={24} /> : "Save Meal"}
           </Button>
         </form>
       </DialogActions>
@@ -220,4 +243,4 @@ const NewMealDialog = ({ open, onClose }: NewMealDialogProps) => {
   );
 };
 
-export default NewMealDialog; 
+export default NewMealDialog;

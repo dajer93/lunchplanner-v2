@@ -235,6 +235,38 @@ export const addMeal = async (
   }
 };
 
+export const updateMeal = async (
+  mealId: string,
+  mealName: string,
+  ingredients: string[],
+): Promise<Meal> => {
+  try {
+    const response = await fetch(`${API_URL}/meals/${mealId}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify({ mealName, ingredients }),
+    });
+
+    const data = await handleResponse(response);
+    console.log("API Response for updateMeal:", data);
+
+    const parsedData = parseResponseBody<MealResponse>(data);
+    if (parsedData && parsedData.meal) {
+      return parsedData.meal;
+    }
+
+    // Fallback
+    if ((data as any).meal) {
+      return (data as any).meal;
+    } else {
+      throw new Error("Unexpected API response format");
+    }
+  } catch (error) {
+    console.error("Error updating meal:", error);
+    throw error;
+  }
+};
+
 // Shopping Lists API
 export const getShoppingLists = async (): Promise<ShoppingList[]> => {
   try {
