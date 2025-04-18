@@ -39,7 +39,16 @@ const HomePage = () => {
             to="/meals"
             variant="contained"
             size="large"
-            sx={{ mt: 2 }}
+            sx={{
+              mt: 2,
+              color: "white",
+              "&:visited": {
+                color: "white",
+              },
+              "&:hover": {
+                color: "white",
+              },
+            }}
           >
             Go to Meals
           </Button>
@@ -52,6 +61,15 @@ const HomePage = () => {
             variant="contained"
             color="primary"
             size="large"
+            sx={{
+              color: "white",
+              "&:visited": {
+                color: "white",
+              },
+              "&:hover": {
+                color: "white",
+              },
+            }}
           >
             Login
           </Button>
@@ -61,6 +79,16 @@ const HomePage = () => {
             variant="outlined"
             color="primary"
             size="large"
+            sx={{
+              // Use the primary color to match regular outlined buttons
+              color: (theme) => theme.palette.primary.main,
+              "&:visited": {
+                color: (theme) => theme.palette.primary.main,
+              },
+              "&:hover": {
+                color: (theme) => theme.palette.primary.main,
+              },
+            }}
           >
             Register
           </Button>
