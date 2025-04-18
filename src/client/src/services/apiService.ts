@@ -292,13 +292,17 @@ export const addShoppingList = async (
 
 export const updateShoppingList = async (
   listId: string,
-  removeIngredientIds: string[],
+  removeIngredientIds: string[] = [],
+  addIngredientIds: string[] = [],
 ): Promise<ShoppingList> => {
   try {
     const response = await fetch(`${API_URL}/shoppingLists/${listId}`, {
       method: "PUT",
       headers: getHeaders(),
-      body: JSON.stringify({ removeIngredientIds }),
+      body: JSON.stringify({
+        removeIngredientIds,
+        addIngredientIds,
+      }),
     });
 
     const data = await handleResponse(response);

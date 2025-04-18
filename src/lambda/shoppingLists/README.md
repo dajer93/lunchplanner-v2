@@ -10,6 +10,9 @@ Adds a new shopping list to the DynamoDB table with a name and list of meal IDs.
 ### Get Shopping Lists (`getShoppingLists.js`)
 Retrieves shopping lists from the DynamoDB table. Can retrieve all shopping lists or a specific shopping list by ID.
 
+### Update Shopping List (`updateShoppingList.js`)
+Updates an existing shopping list by removing and adding ingredients.
+
 ## Features
 
 - CORS Support: Both Lambda functions include CORS headers to allow requests from all origins
@@ -22,9 +25,11 @@ Retrieves shopping lists from the DynamoDB table. Can retrieve all shopping list
 
 - `addShoppingList.js` - Lambda function to add a shopping list
 - `getShoppingLists.js` - Lambda function to retrieve shopping lists
+- `updateShoppingList.js` - Lambda function to update a shopping list
 - `package.json` - Dependencies and project metadata
 - `test-local-add.js` - Test script for the addShoppingList function
 - `test-local-get.js` - Test script for the getShoppingLists function
+- `test-local-update.js` - Test script for the updateShoppingList function
 
 ## Requirements
 
@@ -47,42 +52,22 @@ Retrieves shopping lists from the DynamoDB table. Can retrieve all shopping list
    zip -r function.zip . -x "*.git*" "node_modules/.bin/*"
    ```
 
-### Deploying Add Shopping List Function
+### Deploying with CloudFormation
 
-3. Create the Lambda function (first-time only):
+3. Package your CloudFormation template:
    ```
-   aws lambda create-function \
-     --function-name LunchplannerV2-AddShoppingList \
-     --runtime nodejs18.x \
-     --handler addShoppingList.handler \
-     --role arn:aws:iam::<ACCOUNT_ID>:role/LunchplannerV2LambdaRole \
-     --zip-file fileb://function.zip
+   aws cloudformation package \
+     --template-file template.yaml \
+     --s3-bucket your-deployment-bucket \
+     --output-template-file packaged-template.yaml
    ```
 
-4. Update the Lambda function (for updates):
+4. Deploy your CloudFormation stack:
    ```
-   aws lambda update-function-code \
-     --function-name LunchplannerV2-AddShoppingList \
-     --zip-file fileb://function.zip
-   ```
-
-### Deploying Get Shopping Lists Function
-
-3. Create the Lambda function (first-time only):
-   ```
-   aws lambda create-function \
-     --function-name LunchplannerV2-GetShoppingLists \
-     --runtime nodejs18.x \
-     --handler getShoppingLists.handler \
-     --role arn:aws:iam::<ACCOUNT_ID>:role/LunchplannerV2LambdaRole \
-     --zip-file fileb://function.zip
-   ```
-
-4. Update the Lambda function (for updates):
-   ```
-   aws lambda update-function-code \
-     --function-name LunchplannerV2-GetShoppingLists \
-     --zip-file fileb://function.zip
+   aws cloudformation deploy \
+     --template-file packaged-template.yaml \
+     --stack-name lunchplanner-v2-shopping-lists \
+     --capabilities CAPABILITY_IAM
    ```
 
 ## Usage
@@ -178,6 +163,70 @@ Response (200):
 Error responses:
 - 404: Shopping list not found
 - 500: Server-side error
+
+### Update Shopping List
+
+#### Introduction
+The `updateShoppingList.js` Lambda function now supports both removing and adding ingredients to existing shopping lists.
+
+#### Functionality
+
+##### Removing Ingredients
+- The function accepts an array of ingredient IDs to remove from the shopping list.
+- These ingredients will be filtered out from the shopping list's existing ingredients.
+
+##### Adding Ingredients (New Feature)
+- The function now accepts an array of ingredient IDs to add to the shopping list.
+- The new ingredients will be appended to the shopping list's existing ingredients.
+- Duplicate ingredients are automatically filtered out.
+
+#### API Endpoints
+
+```
+PUT /shoppingLists/{listId}
+```
+
+#### Request Body
+
+```json
+{
+  "removeIngredientIds": ["ingredient-id-1", "ingredient-id-2"],
+  "addIngredientIds": ["ingredient-id-3", "ingredient-id-4"]
+}
+```
+
+Both `removeIngredientIds` and `addIngredientIds` are optional, but at least one must be provided.
+
+#### Response
+
+```json
+{
+  "message": "Shopping list updated successfully",
+  "shoppingList": {
+    "listId": "list-id",
+    "name": "Shopping List Name",
+    "userId": "user-id",
+    "mealIds": ["meal-id-1", "meal-id-2"],
+    "ingredientIds": ["ingredient-id-5", "ingredient-id-3", "ingredient-id-4"],
+    "createdAt": "2023-01-01T00:00:00.000Z",
+    "updatedAt": "2023-01-02T00:00:00.000Z"
+  }
+}
+```
+
+#### Testing
+
+The function can be tested locally using the `test-local-update.js` script. This script tests:
+1. Removing ingredients from a shopping list
+2. Adding ingredients to a shopping list
+3. Both operations in a single request
+
+#### Client Integration
+
+The client application has been updated to:
+- Allow users to add new ingredients directly from the shopping list page
+- Enable removing existing ingredients
+- Update the UI to reflect changes in real-time
 
 ## CORS Support
 

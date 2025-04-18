@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   CircularProgress,
@@ -9,9 +10,11 @@ import {
   Grid,
   IconButton,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import {
+  addIngredient,
   getIngredients,
   getMeals,
   getShoppingLists,
@@ -22,6 +25,7 @@ import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from "@mui/icons-material/Add";
 
 const ShoppingListsPage = () => {
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
@@ -32,6 +36,9 @@ const ShoppingListsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingListId, setUpdatingListId] = useState<string | null>(null);
+  const [newIngredientInputs, setNewIngredientInputs] = useState<{
+    [key: string]: string;
+  }>({});
 
   useEffect(() => {
     fetchData();
@@ -42,12 +49,10 @@ const ShoppingListsPage = () => {
     setError(null);
 
     try {
-      // Fetch all data in parallel
       const [shoppingListsData, mealsData, ingredientsData] = await Promise.all(
         [getShoppingLists(), getMeals(), getIngredients()],
       );
 
-      // Convert meals and ingredients to maps for easy lookup
       const mealsMap = new Map<string, Meal>();
       mealsData.forEach((meal) => mealsMap.set(meal.mealId, meal));
 
@@ -55,10 +60,6 @@ const ShoppingListsPage = () => {
       ingredientsData.forEach((ingredient) =>
         ingredientsMap.set(ingredient.ingredientId, ingredient),
       );
-
-      console.log("Fetched shopping lists:", shoppingListsData);
-      console.log("Fetched meals:", mealsData);
-      console.log("Fetched ingredients:", ingredientsData);
 
       setShoppingLists(shoppingListsData);
       setMeals(mealsMap);
@@ -71,7 +72,6 @@ const ShoppingListsPage = () => {
     }
   };
 
-  // Function to get meal names from meal IDs
   const getMealNames = (shoppingList: ShoppingList) => {
     if (!Array.isArray(shoppingList.mealIds)) {
       console.error("Invalid mealIds:", shoppingList.mealIds);
@@ -83,7 +83,6 @@ const ShoppingListsPage = () => {
       .join(", ");
   };
 
-  // Function to get ingredient names and IDs
   const getIngredientItems = (shoppingList: ShoppingList) => {
     if (!Array.isArray(shoppingList.ingredientIds)) {
       return [];
@@ -95,7 +94,6 @@ const ShoppingListsPage = () => {
     }));
   };
 
-  // Function to handle ingredient removal from a shopping list
   const handleRemoveIngredient = async (
     listId: string,
     ingredientId: string,
@@ -103,16 +101,57 @@ const ShoppingListsPage = () => {
     try {
       setUpdatingListId(listId);
 
-      // Call the API to update the shopping list by removing the ingredient
       const updatedList = await updateShoppingList(listId, [ingredientId]);
 
-      // Update the local state to reflect the change
       setShoppingLists((prevLists) =>
         prevLists.map((list) => (list.listId === listId ? updatedList : list)),
       );
     } catch (err) {
       console.error("Error removing ingredient from shopping list:", err);
       setError("Failed to update shopping list. Please try again later.");
+    } finally {
+      setUpdatingListId(null);
+    }
+  };
+
+  const handleIngredientInputChange = (listId: string, value: string) => {
+    setNewIngredientInputs((prev) => ({
+      ...prev,
+      [listId]: value,
+    }));
+  };
+
+  const handleAddIngredient = async (listId: string) => {
+    const ingredientName = newIngredientInputs[listId]?.trim();
+    if (!listId || !ingredientName) return;
+
+    try {
+      setUpdatingListId(listId);
+
+      const newIngredient = await addIngredient(ingredientName);
+      const updatedList = await updateShoppingList(
+        listId,
+        [],
+        [newIngredient.ingredientId],
+      );
+
+      setShoppingLists((prevLists) =>
+        prevLists.map((list) => (list.listId === listId ? updatedList : list)),
+      );
+
+      setIngredients((prevMap) => {
+        const newMap = new Map(prevMap);
+        newMap.set(newIngredient.ingredientId, newIngredient);
+        return newMap;
+      });
+
+      setNewIngredientInputs((prev) => ({
+        ...prev,
+        [listId]: "",
+      }));
+    } catch (err) {
+      console.error("Error adding ingredient to shopping list:", err);
+      setError("Failed to add ingredient. Please try again later.");
     } finally {
       setUpdatingListId(null);
     }
@@ -161,6 +200,7 @@ const ShoppingListsPage = () => {
           const listId = shoppingList.listId;
           const ingredientItems = getIngredientItems(shoppingList);
           const isUpdating = updatingListId === listId;
+          const newIngredientValue = newIngredientInputs[listId] || "";
 
           return (
             <Grid key={listId} sx={{ width: { xs: "100%", md: "50%" } }}>
@@ -229,6 +269,38 @@ const ShoppingListsPage = () => {
                       No ingredients in this shopping list
                     </Typography>
                   )}
+
+                  <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
+                    <TextField
+                      placeholder="Add new ingredient"
+                      fullWidth
+                      value={newIngredientValue}
+                      onChange={(e) =>
+                        handleIngredientInputChange(listId, e.target.value)
+                      }
+                      disabled={isUpdating}
+                      sx={{
+                        mr: 1,
+                        "& .MuiInputBase-root": {
+                          height: 36.5,
+                        },
+                        "& .MuiOutlinedInput-input": {
+                          padding: "8px 14px",
+                        },
+                      }}
+                      size="small"
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<AddIcon />}
+                      onClick={() => handleAddIngredient(listId)}
+                      disabled={isUpdating || !newIngredientValue.trim()}
+                      sx={{ height: 36.5 }}
+                    >
+                      Add
+                    </Button>
+                  </Box>
 
                   {isUpdating && (
                     <Box
