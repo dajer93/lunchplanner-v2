@@ -46,7 +46,6 @@ const EditMealDialog = ({ open, meal, onClose }: EditMealDialogProps) => {
   const [addingIngredient, setAddingIngredient] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize state when the meal changes
   useEffect(() => {
     if (meal) {
       setMealName(meal.mealName);
@@ -55,7 +54,6 @@ const EditMealDialog = ({ open, meal, onClose }: EditMealDialogProps) => {
     }
   }, [meal]);
 
-  // Update selected ingredients whenever the ingredient list or selected IDs change
   useEffect(() => {
     if (allIngredients.length > 0 && selectedIngredientIds.length > 0) {
       const selected = allIngredients.filter((ingredient) =>
@@ -89,7 +87,6 @@ const EditMealDialog = ({ open, meal, onClose }: EditMealDialogProps) => {
   };
 
   const handleAddIngredient = async (e?: FormEvent) => {
-    // Prevent form submission if this is called from a form event
     if (e) {
       e.preventDefault();
     }
@@ -104,7 +101,6 @@ const EditMealDialog = ({ open, meal, onClose }: EditMealDialogProps) => {
     try {
       const newIngredient = await addIngredient(currentIngredient.trim());
 
-      // Add the new ingredient to our lists
       setAllIngredients([...allIngredients, newIngredient]);
       setSelectedIngredientIds([
         ...selectedIngredientIds,
@@ -126,7 +122,6 @@ const EditMealDialog = ({ open, meal, onClose }: EditMealDialogProps) => {
   };
 
   const handleSaveMeal = async (e?: FormEvent) => {
-    // Prevent form submission if this is called from a form event
     if (e) {
       e.preventDefault();
     }

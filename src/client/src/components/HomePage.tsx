@@ -80,7 +80,6 @@ const HomePage = () => {
             color="primary"
             size="large"
             sx={{
-              // Use the primary color to match regular outlined buttons
               color: (theme) => theme.palette.primary.main,
               "&:visited": {
                 color: (theme) => theme.palette.primary.main,
