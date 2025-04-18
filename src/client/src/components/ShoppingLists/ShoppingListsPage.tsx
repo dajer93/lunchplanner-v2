@@ -7,14 +7,11 @@ import {
   CardContent,
   Checkbox,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Divider,
   Grid,
   IconButton,
+  Menu,
+  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -33,6 +30,7 @@ import RestaurantIcon from "@mui/icons-material/Restaurant";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 const ShoppingListsPage = () => {
@@ -47,8 +45,8 @@ const ShoppingListsPage = () => {
   const [newIngredientInputs, setNewIngredientInputs] = useState<{
     [key: string]: string;
   }>({});
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [listToDelete, setListToDelete] = useState<ShoppingList | null>(null);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [activeListId, setActiveListId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -167,24 +165,31 @@ const ShoppingListsPage = () => {
     }
   };
 
-  const openDeleteDialog = (shoppingList: ShoppingList) => {
-    setListToDelete(shoppingList);
-    setDeleteDialogOpen(true);
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    listId: string,
+  ) => {
+    setMenuAnchorEl(event.currentTarget);
+    setActiveListId(listId);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setActiveListId(null);
   };
 
   const handleDeleteList = async () => {
-    if (!listToDelete) return;
+    if (!activeListId) return;
 
     try {
-      setUpdatingListId(listToDelete.listId);
-      await deleteShoppingList(listToDelete.listId);
+      setUpdatingListId(activeListId);
+      await deleteShoppingList(activeListId);
 
       setShoppingLists((prevLists) =>
-        prevLists.filter((list) => list.listId !== listToDelete.listId),
+        prevLists.filter((list) => list.listId !== activeListId),
       );
 
-      setDeleteDialogOpen(false);
-      setListToDelete(null);
+      handleMenuClose();
     } catch (err) {
       console.error("Error deleting shopping list:", err);
       setError("Failed to delete shopping list. Please try again later.");
@@ -292,11 +297,27 @@ const ShoppingListsPage = () => {
             <Grid key={listId} sx={{ width: { xs: "100%", md: "50%" } }}>
               <Card>
                 <CardContent>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <ShoppingBasketIcon sx={{ mr: 1 }} color="primary" />
-                    <Typography variant="h6" component="h2">
-                      {shoppingList.name}
-                    </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      mb: 2,
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <ShoppingBasketIcon sx={{ mr: 1 }} color="primary" />
+                      <Typography variant="h6" component="h2">
+                        {shoppingList.name}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      aria-label="more options"
+                      onClick={(e) => handleMenuOpen(e, listId)}
+                      disabled={isUpdating}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
                   </Box>
 
                   <Typography
@@ -427,20 +448,6 @@ const ShoppingListsPage = () => {
                     </Button>
                   </Box>
 
-                  <Box
-                    sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}
-                  >
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      startIcon={<DeleteIcon />}
-                      onClick={() => openDeleteDialog(shoppingList)}
-                      disabled={isUpdating}
-                    >
-                      Delete List
-                    </Button>
-                  </Box>
-
                   {isUpdating && (
                     <Box
                       sx={{ display: "flex", justifyContent: "center", mt: 2 }}
@@ -455,40 +462,20 @@ const ShoppingListsPage = () => {
         })}
       </Grid>
 
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
       >
-        <DialogTitle id="delete-dialog-title">Delete Shopping List</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete this shopping list? This action
-            cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => setDeleteDialogOpen(false)}
-            disabled={updatingListId === listToDelete?.listId}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDeleteList}
-            color="error"
-            disabled={updatingListId === listToDelete?.listId}
-            autoFocus
-          >
-            {updatingListId === listToDelete?.listId ? (
-              <CircularProgress size={24} />
-            ) : (
-              "Delete"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <MenuItem
+          onClick={handleDeleteList}
+          disabled={updatingListId === activeListId}
+          sx={{ color: "error.main" }}
+        >
+          <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+          Delete List
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };
