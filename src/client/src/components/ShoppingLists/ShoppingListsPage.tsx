@@ -2,16 +2,23 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
+  Checkbox,
   CircularProgress,
   Divider,
   Grid,
   IconButton,
+  Menu,
+  MenuItem,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import {
+  addIngredient,
+  deleteShoppingList,
   getIngredients,
   getMeals,
   getShoppingLists,
@@ -22,6 +29,9 @@ import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from "@mui/icons-material/Add";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const ShoppingListsPage = () => {
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
@@ -32,6 +42,11 @@ const ShoppingListsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingListId, setUpdatingListId] = useState<string | null>(null);
+  const [newIngredientInputs, setNewIngredientInputs] = useState<{
+    [key: string]: string;
+  }>({});
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [activeListId, setActiveListId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -42,12 +57,10 @@ const ShoppingListsPage = () => {
     setError(null);
 
     try {
-      // Fetch all data in parallel
       const [shoppingListsData, mealsData, ingredientsData] = await Promise.all(
         [getShoppingLists(), getMeals(), getIngredients()],
       );
 
-      // Convert meals and ingredients to maps for easy lookup
       const mealsMap = new Map<string, Meal>();
       mealsData.forEach((meal) => mealsMap.set(meal.mealId, meal));
 
@@ -55,10 +68,6 @@ const ShoppingListsPage = () => {
       ingredientsData.forEach((ingredient) =>
         ingredientsMap.set(ingredient.ingredientId, ingredient),
       );
-
-      console.log("Fetched shopping lists:", shoppingListsData);
-      console.log("Fetched meals:", mealsData);
-      console.log("Fetched ingredients:", ingredientsData);
 
       setShoppingLists(shoppingListsData);
       setMeals(mealsMap);
@@ -71,7 +80,6 @@ const ShoppingListsPage = () => {
     }
   };
 
-  // Function to get meal names from meal IDs
   const getMealNames = (shoppingList: ShoppingList) => {
     if (!Array.isArray(shoppingList.mealIds)) {
       console.error("Invalid mealIds:", shoppingList.mealIds);
@@ -83,7 +91,6 @@ const ShoppingListsPage = () => {
       .join(", ");
   };
 
-  // Function to get ingredient names and IDs
   const getIngredientItems = (shoppingList: ShoppingList) => {
     if (!Array.isArray(shoppingList.ingredientIds)) {
       return [];
@@ -95,7 +102,6 @@ const ShoppingListsPage = () => {
     }));
   };
 
-  // Function to handle ingredient removal from a shopping list
   const handleRemoveIngredient = async (
     listId: string,
     ingredientId: string,
@@ -103,15 +109,139 @@ const ShoppingListsPage = () => {
     try {
       setUpdatingListId(listId);
 
-      // Call the API to update the shopping list by removing the ingredient
       const updatedList = await updateShoppingList(listId, [ingredientId]);
 
-      // Update the local state to reflect the change
       setShoppingLists((prevLists) =>
         prevLists.map((list) => (list.listId === listId ? updatedList : list)),
       );
     } catch (err) {
       console.error("Error removing ingredient from shopping list:", err);
+      setError("Failed to update shopping list. Please try again later.");
+    } finally {
+      setUpdatingListId(null);
+    }
+  };
+
+  const handleIngredientInputChange = (listId: string, value: string) => {
+    setNewIngredientInputs((prev) => ({
+      ...prev,
+      [listId]: value,
+    }));
+  };
+
+  const handleAddIngredient = async (listId: string) => {
+    const ingredientName = newIngredientInputs[listId]?.trim();
+    if (!listId || !ingredientName) return;
+
+    try {
+      setUpdatingListId(listId);
+
+      const newIngredient = await addIngredient(ingredientName);
+      const updatedList = await updateShoppingList(
+        listId,
+        [],
+        [newIngredient.ingredientId],
+      );
+
+      setShoppingLists((prevLists) =>
+        prevLists.map((list) => (list.listId === listId ? updatedList : list)),
+      );
+
+      setIngredients((prevMap) => {
+        const newMap = new Map(prevMap);
+        newMap.set(newIngredient.ingredientId, newIngredient);
+        return newMap;
+      });
+
+      setNewIngredientInputs((prev) => ({
+        ...prev,
+        [listId]: "",
+      }));
+    } catch (err) {
+      console.error("Error adding ingredient to shopping list:", err);
+      setError("Failed to add ingredient. Please try again later.");
+    } finally {
+      setUpdatingListId(null);
+    }
+  };
+
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    listId: string,
+  ) => {
+    setMenuAnchorEl(event.currentTarget);
+    setActiveListId(listId);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setActiveListId(null);
+  };
+
+  const handleDeleteList = async () => {
+    if (!activeListId) return;
+
+    try {
+      setUpdatingListId(activeListId);
+      await deleteShoppingList(activeListId);
+
+      setShoppingLists((prevLists) =>
+        prevLists.filter((list) => list.listId !== activeListId),
+      );
+
+      handleMenuClose();
+    } catch (err) {
+      console.error("Error deleting shopping list:", err);
+      setError("Failed to delete shopping list. Please try again later.");
+    } finally {
+      setUpdatingListId(null);
+    }
+  };
+
+  const isIngredientTicked = (
+    shoppingList: ShoppingList,
+    ingredientId: string,
+  ): boolean => {
+    return Boolean(shoppingList.tickedIngredients?.includes(ingredientId));
+  };
+
+  const handleIngredientToggle = async (
+    listId: string,
+    ingredientId: string,
+    checked: boolean,
+  ) => {
+    try {
+      setUpdatingListId(listId);
+
+      const currentList = shoppingLists.find((list) => list.listId === listId);
+      if (!currentList) return;
+
+      const currentTickedIngredients = currentList.tickedIngredients || [];
+
+      let newTickedIngredients: string[];
+      if (checked) {
+        newTickedIngredients = [
+          ...currentTickedIngredients,
+          ingredientId,
+        ].filter((id, index, self) => self.indexOf(id) === index);
+      } else {
+        newTickedIngredients = currentTickedIngredients.filter(
+          (id) => id !== ingredientId,
+        );
+      }
+
+      const updatedList = await updateShoppingList(
+        listId,
+        [], // No ingredients to remove
+        [], // No ingredients to add
+        newTickedIngredients,
+      );
+
+      setShoppingLists((prevLists) =>
+        prevLists.map((list) => (list.listId === listId ? updatedList : list)),
+      );
+    } catch (err) {
+      console.error("Error updating ticked ingredients:", err);
       setError("Failed to update shopping list. Please try again later.");
     } finally {
       setUpdatingListId(null);
@@ -161,16 +291,33 @@ const ShoppingListsPage = () => {
           const listId = shoppingList.listId;
           const ingredientItems = getIngredientItems(shoppingList);
           const isUpdating = updatingListId === listId;
+          const newIngredientValue = newIngredientInputs[listId] || "";
 
           return (
             <Grid key={listId} sx={{ width: { xs: "100%", md: "50%" } }}>
               <Card>
                 <CardContent>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <ShoppingBasketIcon sx={{ mr: 1 }} color="primary" />
-                    <Typography variant="h6" component="h2">
-                      {shoppingList.name}
-                    </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      mb: 2,
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <ShoppingBasketIcon sx={{ mr: 1 }} color="primary" />
+                      <Typography variant="h6" component="h2">
+                        {shoppingList.name}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      aria-label="more options"
+                      onClick={(e) => handleMenuOpen(e, listId)}
+                      disabled={isUpdating}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
                   </Box>
 
                   <Typography
@@ -208,9 +355,48 @@ const ShoppingListsPage = () => {
                           justifyContent="space-between"
                           sx={{ mb: 0.5 }}
                         >
-                          <Typography variant="body2">
-                            {ingredient.name}
-                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              flex: 1,
+                            }}
+                          >
+                            <Checkbox
+                              checked={isIngredientTicked(
+                                shoppingList,
+                                ingredient.id,
+                              )}
+                              onChange={(e) =>
+                                handleIngredientToggle(
+                                  listId,
+                                  ingredient.id,
+                                  e.target.checked,
+                                )
+                              }
+                              disabled={isUpdating}
+                              size="small"
+                            />
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                textDecoration: isIngredientTicked(
+                                  shoppingList,
+                                  ingredient.id,
+                                )
+                                  ? "line-through"
+                                  : "none",
+                                color: isIngredientTicked(
+                                  shoppingList,
+                                  ingredient.id,
+                                )
+                                  ? "text.secondary"
+                                  : "text.primary",
+                              }}
+                            >
+                              {ingredient.name}
+                            </Typography>
+                          </Box>
                           <IconButton
                             size="small"
                             color="error"
@@ -230,6 +416,38 @@ const ShoppingListsPage = () => {
                     </Typography>
                   )}
 
+                  <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
+                    <TextField
+                      placeholder="Add new ingredient"
+                      fullWidth
+                      value={newIngredientValue}
+                      onChange={(e) =>
+                        handleIngredientInputChange(listId, e.target.value)
+                      }
+                      disabled={isUpdating}
+                      sx={{
+                        mr: 1,
+                        "& .MuiInputBase-root": {
+                          height: 36.5,
+                        },
+                        "& .MuiOutlinedInput-input": {
+                          padding: "8px 14px",
+                        },
+                      }}
+                      size="small"
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<AddIcon />}
+                      onClick={() => handleAddIngredient(listId)}
+                      disabled={isUpdating || !newIngredientValue.trim()}
+                      sx={{ height: 36.5 }}
+                    >
+                      Add
+                    </Button>
+                  </Box>
+
                   {isUpdating && (
                     <Box
                       sx={{ display: "flex", justifyContent: "center", mt: 2 }}
@@ -243,6 +461,21 @@ const ShoppingListsPage = () => {
           );
         })}
       </Grid>
+
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem
+          onClick={handleDeleteList}
+          disabled={updatingListId === activeListId}
+          sx={{ color: "error.main" }}
+        >
+          <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+          Delete List
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };

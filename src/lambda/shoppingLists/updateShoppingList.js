@@ -7,7 +7,7 @@ const dynamoDbClient = new DynamoDBClient({ region: 'eu-central-1' });
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
-    'Access-Control-Allow-Methods': 'OPTIONS,PUT,DELETE',
+    'Access-Control-Allow-Methods': 'OPTIONS,PUT,POST,DELETE',
     'Access-Control-Allow-Credentials': true
 };
 
@@ -36,7 +36,7 @@ function extractUserId(event) {
 
 /**
  * Lambda function to update a shopping list in the DynamoDB LunchplannerV2-ShoppingLists table
- * Can update the list of ingredients by removing specific ingredient IDs
+ * Can update the list of ingredients by removing specific ingredient IDs or adding new ingredient IDs
  * 
  * @param {Object} event - Lambda event object
  * @returns {Object} - Response containing the updated shopping list details
@@ -52,7 +52,6 @@ exports.handler = async (event) => {
     }
     
     try {
-        // Extract user ID from Cognito context
         const userId = extractUserId(event);
         
         if (!userId) {
@@ -63,7 +62,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // Check if a specific listId was provided in the path parameters
         const listId = event.pathParameters?.listId;
         
         if (!listId) {
@@ -74,23 +72,29 @@ exports.handler = async (event) => {
             };
         }
         
-        // Parse request body if it's a string
         const requestBody = typeof event.body === 'string' 
             ? JSON.parse(event.body) 
             : event.body || event;
         
-        // Get the list of ingredient IDs to remove
-        const { removeIngredientIds } = requestBody;
+        const { 
+            removeIngredientIds = [], 
+            addIngredientIds = [],
+            tickedIngredientIds
+        } = requestBody;
         
-        if (!removeIngredientIds || !Array.isArray(removeIngredientIds) || removeIngredientIds.length === 0) {
+        // Validate that at least one operation is requested
+        if (
+            (removeIngredientIds.length === 0 || !Array.isArray(removeIngredientIds)) &&
+            (addIngredientIds.length === 0 || !Array.isArray(addIngredientIds)) &&
+            tickedIngredientIds === undefined
+        ) {
             return {
                 statusCode: 400,
                 headers: corsHeaders,
-                body: JSON.stringify({ message: 'removeIngredientIds array is required' })
+                body: JSON.stringify({ message: 'At least one of removeIngredientIds, addIngredientIds, or tickedIngredientIds is required' })
             };
         }
         
-        // First, get the existing shopping list to verify it exists and belongs to the user
         const getParams = {
             TableName: 'LunchplannerV2-ShoppingLists',
             Key: marshall({ listId })
@@ -108,7 +112,6 @@ exports.handler = async (event) => {
         
         const shoppingList = unmarshall(Item);
         
-        // Check if this shopping list belongs to the current user
         if (shoppingList.userId !== userId) {
             return {
                 statusCode: 403,
@@ -117,19 +120,41 @@ exports.handler = async (event) => {
             };
         }
         
-        // Filter out the ingredient IDs to remove
         const currentIngredientIds = shoppingList.ingredientIds || [];
-        const updatedIngredientIds = currentIngredientIds.filter(id => !removeIngredientIds.includes(id));
         
-        // Update the shopping list in DynamoDB
+        let updatedIngredientIds = currentIngredientIds;
+        if (removeIngredientIds.length > 0) {
+            updatedIngredientIds = updatedIngredientIds.filter(id => !removeIngredientIds.includes(id));
+        }
+        
+        if (addIngredientIds.length > 0) {
+            const newIngredients = addIngredientIds.filter(id => !updatedIngredientIds.includes(id));
+            updatedIngredientIds = [...updatedIngredientIds, ...newIngredients];
+        }
+        
+        let updateExpression = 'SET updatedAt = :updatedAt';
+        let expressionAttributeValues = {
+            ':updatedAt': new Date().toISOString()
+        };
+
+        // If we're updating ingredients
+        if (removeIngredientIds.length > 0 || addIngredientIds.length > 0) {
+            updateExpression += ', ingredientIds = :ingredientIds';
+            expressionAttributeValues[':ingredientIds'] = updatedIngredientIds;
+        }
+
+        // If we're updating ticked ingredients
+        if (tickedIngredientIds !== undefined) {
+            const tickedIngredients = Array.isArray(tickedIngredientIds) ? tickedIngredientIds : [];
+            updateExpression += ', tickedIngredients = :tickedIngredients';
+            expressionAttributeValues[':tickedIngredients'] = tickedIngredients;
+        }
+        
         const updateParams = {
             TableName: 'LunchplannerV2-ShoppingLists',
             Key: marshall({ listId }),
-            UpdateExpression: 'SET ingredientIds = :ingredientIds, updatedAt = :updatedAt',
-            ExpressionAttributeValues: marshall({
-                ':ingredientIds': updatedIngredientIds,
-                ':updatedAt': new Date().toISOString()
-            }),
+            UpdateExpression: updateExpression,
+            ExpressionAttributeValues: marshall(expressionAttributeValues),
             ReturnValues: 'ALL_NEW'
         };
         

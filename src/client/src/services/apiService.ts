@@ -235,6 +235,38 @@ export const addMeal = async (
   }
 };
 
+export const updateMeal = async (
+  mealId: string,
+  mealName: string,
+  ingredients: string[],
+): Promise<Meal> => {
+  try {
+    const response = await fetch(`${API_URL}/meals/${mealId}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify({ mealName, ingredients }),
+    });
+
+    const data = await handleResponse(response);
+    console.log("API Response for updateMeal:", data);
+
+    const parsedData = parseResponseBody<MealResponse>(data);
+    if (parsedData && parsedData.meal) {
+      return parsedData.meal;
+    }
+
+    // Fallback
+    if ((data as any).meal) {
+      return (data as any).meal;
+    } else {
+      throw new Error("Unexpected API response format");
+    }
+  } catch (error) {
+    console.error("Error updating meal:", error);
+    throw error;
+  }
+};
+
 // Shopping Lists API
 export const getShoppingLists = async (): Promise<ShoppingList[]> => {
   try {
@@ -292,13 +324,19 @@ export const addShoppingList = async (
 
 export const updateShoppingList = async (
   listId: string,
-  removeIngredientIds: string[],
+  removeIngredientIds: string[] = [],
+  addIngredientIds: string[] = [],
+  tickedIngredientIds?: string[],
 ): Promise<ShoppingList> => {
   try {
     const response = await fetch(`${API_URL}/shoppingLists/${listId}`, {
       method: "PUT",
       headers: getHeaders(),
-      body: JSON.stringify({ removeIngredientIds }),
+      body: JSON.stringify({
+        removeIngredientIds,
+        addIngredientIds,
+        ...(tickedIngredientIds !== undefined && { tickedIngredientIds }),
+      }),
     });
 
     const data = await handleResponse(response);
@@ -317,6 +355,25 @@ export const updateShoppingList = async (
     }
   } catch (error) {
     console.error("Error updating shopping list:", error);
+    throw error;
+  }
+};
+
+export const deleteShoppingList = async (
+  listId: string,
+): Promise<{ listId: string }> => {
+  try {
+    const response = await fetch(`${API_URL}/shoppingLists/${listId}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+
+    const data = await handleResponse(response);
+    console.log("API Response for deleteShoppingList:", data);
+
+    return { listId };
+  } catch (error) {
+    console.error("Error deleting shopping list:", error);
     throw error;
   }
 };
