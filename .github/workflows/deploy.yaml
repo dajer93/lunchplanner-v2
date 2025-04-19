@@ -52,6 +52,11 @@ jobs:
           npm ci
           zip -r function.zip ./*
           
+          # Shares Lambda
+          cd ../../lambda/shares
+          npm ci
+          zip -r function.zip ./*
+          
           # Return to root
           cd ../../..
           
