@@ -1,12 +1,12 @@
 {
   "name": "lunchplanner-v2",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "scripts": {
     "start": "cd src/client && npm run dev",
     "start:local:lambda": "sam local start-api",
     "build": "cd src/client && npm run build",
-    "install:all": "cd src/client && npm install && cd ../../src/lambda/ingredients && npm install && cd ../meals && npm install && cd ../shoppingLists && npm install",
+    "install:all": "cd src/client && npm install && cd ../../src/lambda/ingredients && npm install && cd ../meals && npm install && cd ../shares && npm install && cd ../shoppingLists && npm install",
     "prepare": "husky install",
     "versionBump": "node ./scripts/version-bump.js"
   },

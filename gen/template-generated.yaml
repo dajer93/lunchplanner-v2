@@ -61,7 +61,7 @@ Resources:
   LunchplannerV2AddMeal:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://lunchplannerv2-lambdas/b8c8932eb2aa290f346eceefa6ab88ca
+      CodeUri: s3://lunchplannerv2-lambdas/3b7bbf03b24f201f9c9688117ec1cfcc
       Handler: addMeal.handler
       Runtime: nodejs18.x
       Architectures:
@@ -80,7 +80,7 @@ Resources:
   LunchplannerV2GetMeals:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://lunchplannerv2-lambdas/b8c8932eb2aa290f346eceefa6ab88ca
+      CodeUri: s3://lunchplannerv2-lambdas/3b7bbf03b24f201f9c9688117ec1cfcc
       Handler: getMeals.handler
       Runtime: nodejs18.x
       Events:
@@ -97,7 +97,7 @@ Resources:
   LunchplannerV2UpdateMeal:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://lunchplannerv2-lambdas/b8c8932eb2aa290f346eceefa6ab88ca
+      CodeUri: s3://lunchplannerv2-lambdas/3b7bbf03b24f201f9c9688117ec1cfcc
       Handler: updateMeal.handler
       Runtime: nodejs18.x
       Events:
@@ -114,7 +114,7 @@ Resources:
   LunchplannerV2AddIngredient:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://lunchplannerv2-lambdas/42bd21d0be29bb1b7eda4757dceab469
+      CodeUri: s3://lunchplannerv2-lambdas/e9bafcb62170aeb5e68d1cd38edef121
       Handler: addIngredient.handler
       Runtime: nodejs18.x
       Events:
@@ -131,7 +131,7 @@ Resources:
   LunchplannerV2GetIngredients:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://lunchplannerv2-lambdas/42bd21d0be29bb1b7eda4757dceab469
+      CodeUri: s3://lunchplannerv2-lambdas/e9bafcb62170aeb5e68d1cd38edef121
       Handler: getIngredients.handler
       Runtime: nodejs18.x
       Events:
@@ -148,7 +148,7 @@ Resources:
   LunchplannerV2AddShoppingList:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://lunchplannerv2-lambdas/d4734beae09cb75ae6f6d79e0612b465
+      CodeUri: s3://lunchplannerv2-lambdas/6705beff04d10c7ae586f64e5cc8a549
       Handler: addShoppingList.handler
       Runtime: nodejs18.x
       Events:
@@ -167,7 +167,7 @@ Resources:
   LunchplannerV2GetShoppingLists:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://lunchplannerv2-lambdas/d4734beae09cb75ae6f6d79e0612b465
+      CodeUri: s3://lunchplannerv2-lambdas/6705beff04d10c7ae586f64e5cc8a549
       Handler: getShoppingLists.handler
       Runtime: nodejs18.x
       Events:
@@ -184,7 +184,7 @@ Resources:
   LunchplannerV2UpdateShoppingList:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://lunchplannerv2-lambdas/d4734beae09cb75ae6f6d79e0612b465
+      CodeUri: s3://lunchplannerv2-lambdas/6705beff04d10c7ae586f64e5cc8a549
       Handler: updateShoppingList.handler
       Runtime: nodejs18.x
       Events:
@@ -201,7 +201,7 @@ Resources:
   LunchplannerV2DeleteShoppingList:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://lunchplannerv2-lambdas/d4734beae09cb75ae6f6d79e0612b465
+      CodeUri: s3://lunchplannerv2-lambdas/6705beff04d10c7ae586f64e5cc8a549
       Handler: deleteShoppingList.handler
       Runtime: nodejs18.x
       Events:
@@ -215,6 +215,92 @@ Resources:
       Policies:
       - DynamoDBCrudPolicy:
           TableName: LunchplannerV2-ShoppingLists
+  LunchplannerV2GetShares:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://lunchplannerv2-lambdas/707d6e4925afbc5d7b88e554a7802253
+      Handler: getShares.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /share
+            Method: get
+            RestApiId:
+              Ref: LunchplannerApi
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: LunchplannerV2-SharedShoppingLists
+      - Statement:
+        - Effect: Allow
+          Action:
+          - cognito-idp:AdminGetUser
+          Resource: arn:aws:cognito-idp:eu-central-1:535002862952:userpool/eu-central-1_FRd37FSmj
+  LunchplannerV2AddShare:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://lunchplannerv2-lambdas/707d6e4925afbc5d7b88e554a7802253
+      Handler: addShare.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /share
+            Method: post
+            RestApiId:
+              Ref: LunchplannerApi
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: LunchplannerV2-SharedShoppingLists
+      - DynamoDBReadPolicy:
+          TableName: LunchplannerV2-ShoppingLists
+      - Statement:
+        - Effect: Allow
+          Action:
+          - cognito-idp:ListUsers
+          Resource: arn:aws:cognito-idp:eu-central-1:535002862952:userpool/eu-central-1_FRd37FSmj
+  LunchplannerV2DeleteShare:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://lunchplannerv2-lambdas/707d6e4925afbc5d7b88e554a7802253
+      Handler: deleteShare.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /share/{shareId}
+            Method: delete
+            RestApiId:
+              Ref: LunchplannerApi
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: LunchplannerV2-SharedShoppingLists
+  LunchplannerV2GetSharedShoppingLists:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://lunchplannerv2-lambdas/707d6e4925afbc5d7b88e554a7802253
+      Handler: getSharedShoppingLists.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /share/shoppingLists
+            Method: get
+            RestApiId:
+              Ref: LunchplannerApi
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: LunchplannerV2-SharedShoppingLists
+      - DynamoDBReadPolicy:
+          TableName: LunchplannerV2-ShoppingLists
+      - DynamoDBReadPolicy:
+          TableName: LunchplannerV2-Meals
+      - DynamoDBReadPolicy:
+          TableName: LunchplannerV2-MealIngredients
 Outputs:
   ApiURL:
     Description: API Gateway endpoint URL for dev stage
