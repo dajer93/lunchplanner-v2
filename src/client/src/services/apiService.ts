@@ -124,6 +124,21 @@ interface ShoppingListResponse {
   shoppingList: ShoppingList;
 }
 
+// Types for shares
+interface ShareResponse {
+  shares: Share[];
+  count: number;
+}
+
+interface Share {
+  shareId: string;
+  listId: string;
+  userId: string;
+  userEmail?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
 // Ingredients API
 export const getIngredients = async (): Promise<Ingredient[]> => {
   try {
@@ -374,6 +389,102 @@ export const deleteShoppingList = async (
     return { listId };
   } catch (error) {
     console.error("Error deleting shopping list:", error);
+    throw error;
+  }
+};
+
+// Shares API
+export const getShares = async (listId?: string): Promise<Share[]> => {
+  try {
+    const url = listId
+      ? `${API_URL}/share?listId=${encodeURIComponent(listId)}`
+      : `${API_URL}/share`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+
+    const data = await handleResponse(response);
+    console.log("API Response for getShares:", data);
+
+    const parsedData = parseResponseBody<ShareResponse>(data);
+    if (parsedData && parsedData.shares) {
+      return parsedData.shares;
+    }
+
+    // Fallback
+    return (data as any).shares || [];
+  } catch (error) {
+    console.error("Error fetching shares:", error);
+    throw error;
+  }
+};
+
+export const addShare = async (
+  listId: string,
+  email: string,
+): Promise<Share> => {
+  try {
+    const response = await fetch(`${API_URL}/share`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ listId, email }),
+    });
+
+    const data = await handleResponse(response);
+    console.log("API Response for addShare:", data);
+
+    // The API returns the share object directly in the response
+    if (data && data.share) {
+      return data.share;
+    }
+
+    throw new Error("Unexpected API response format");
+  } catch (error) {
+    console.error("Error adding share:", error);
+    throw error;
+  }
+};
+
+export const deleteShare = async (
+  shareId: string,
+): Promise<{ shareId: string }> => {
+  try {
+    const response = await fetch(`${API_URL}/share/${shareId}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+
+    const data = await handleResponse(response);
+    console.log("API Response for deleteShare:", data);
+
+    return { shareId };
+  } catch (error) {
+    console.error("Error deleting share:", error);
+    throw error;
+  }
+};
+
+export const getSharedShoppingLists = async (): Promise<ShoppingList[]> => {
+  try {
+    const response = await fetch(`${API_URL}/share/shoppingLists`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+
+    const data = await handleResponse(response);
+    console.log("API Response for getSharedShoppingLists:", data);
+
+    // The API returns shopping lists with the same structure as the regular shopping lists
+    // but with additional properties like isShared
+    if (data && data.shoppingLists) {
+      return data.shoppingLists;
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Error fetching shared shopping lists:", error);
     throw error;
   }
 };

@@ -222,6 +222,93 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: LunchplannerV2-ShoppingLists
 
+  # Shares Functions
+  LunchplannerV2GetShares:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/shares/function.zip
+      Handler: getShares.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /share
+            Method: get
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-SharedShoppingLists
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cognito-idp:AdminGetUser
+              Resource: "arn:aws:cognito-idp:eu-central-1:535002862952:userpool/eu-central-1_FRd37FSmj"
+
+  LunchplannerV2AddShare:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/shares/function.zip
+      Handler: addShare.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /share
+            Method: post
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-SharedShoppingLists
+        - DynamoDBReadPolicy:
+            TableName: LunchplannerV2-ShoppingLists
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cognito-idp:ListUsers
+              Resource: "arn:aws:cognito-idp:eu-central-1:535002862952:userpool/eu-central-1_FRd37FSmj"
+
+  LunchplannerV2DeleteShare:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/shares/function.zip
+      Handler: deleteShare.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /share/{shareId}
+            Method: delete
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: LunchplannerV2-SharedShoppingLists
+
+  LunchplannerV2GetSharedShoppingLists:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda/shares/function.zip
+      Handler: getSharedShoppingLists.handler
+      Runtime: nodejs18.x
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /share/shoppingLists
+            Method: get
+            RestApiId: !Ref LunchplannerApi
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: LunchplannerV2-SharedShoppingLists
+        - DynamoDBReadPolicy:
+            TableName: LunchplannerV2-ShoppingLists
+        - DynamoDBReadPolicy:
+            TableName: LunchplannerV2-Meals
+        - DynamoDBReadPolicy:
+            TableName: LunchplannerV2-MealIngredients
+
 Outputs:
   ApiURL:
     Description: "API Gateway endpoint URL for dev stage"
