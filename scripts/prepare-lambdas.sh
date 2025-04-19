@@ -15,6 +15,11 @@ cd ../../lambda/shoppingLists
 npm ci
 zip -r function.zip ./*
 
+# Shares Lambda
+cd ../../lambda/shares
+npm ci
+zip -r function.zip ./*
+
 cd ../../..
 
 aws cloudformation package --s3-bucket lunchplannerv2-lambdas --template-file template.yaml --output-template-file gen/template-generated.yaml

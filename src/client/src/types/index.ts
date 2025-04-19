@@ -19,12 +19,25 @@ export interface ShoppingList {
   tickedIngredients?: string[];
   createdAt?: string;
   updatedAt?: string;
+  isShared?: boolean;
+  // For shared lists
+  mealNames?: string[];
+  ingredientNames?: { id: string; name: string }[];
 }
 
 export interface User {
   username: string;
   isAuthenticated: boolean;
   token?: string;
+}
+
+export interface Share {
+  shareId: string;
+  listId: string;
+  userId: string;
+  userEmail?: string;
+  createdBy: string;
+  createdAt: string;
 }
 
 // API response types
