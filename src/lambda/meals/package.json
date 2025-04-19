@@ -1,6 +1,6 @@
 {
   "name": "lunchplanner-v2-meals-lambda",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Lambda function for handling meals in the LunchPlanner V2 application",
   "main": "addMeal.js",
   "dependencies": {
